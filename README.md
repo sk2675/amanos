@@ -23,7 +23,7 @@ npm install
 npm run dev
 ```
 
-Die Landingpage wird mit Astro gebaut. Der Produktions-Build landet statisch in `site/dist/` und wird über das verbundene Vercel-Projekt veröffentlicht. Im Vercel-Projekt muss als **Root Directory** ausschließlich `site` eingestellt sein; dadurch bleibt das spätere npm-CLI vollständig außerhalb des Website-Deployments.
+Die Landingpage wird mit Astro gebaut. Der Produktions-Build landet statisch in `site/dist/` und wird über das verbundene Vercel-Projekt veröffentlicht. Die Root-Konfiguration in `vercel.json` beschränkt Installation, Build und Ausgabe ausdrücklich auf `site/`; das spätere npm-CLI bleibt vollständig außerhalb des Website-Deployments.
 
 ## Späteres npm-Paket
 
