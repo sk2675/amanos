@@ -1,0 +1,183 @@
+---
+import "../styles/global.css";
+
+const steps = [
+  {
+    number: "01",
+    title: "Entscheidungen erkennen",
+    text: "Amanos liest Markdown, HTML und Textdateien und hält klare Entscheidungen samt Quelle und Sicherheit fest.",
+    symbol: "⌁",
+  },
+  {
+    number: "02",
+    title: "Auswirkungen finden",
+    text: "Alle Git-Repositories im Workspace werden nach möglichen Folgen durchsucht — nachvollziehbar und als Kandidaten markiert.",
+    symbol: "⌕",
+  },
+  {
+    number: "03",
+    title: "Kontext sauber halten",
+    text: "DECISIONS.md wird zur lesbaren Wahrheit: append-only, lokal und bereit für den nächsten Coding-Agenten.",
+    symbol: "✓",
+  },
+];
+
+const principles = [
+  ["Local first", "Keine Cloud, kein Konto und kein eigener LLM-Provider."],
+  ["Erklärbar", "Jeder Fund verweist auf Datei, Zeilen und Sicherheitswert."],
+  ["Git-sicher", "Kein automatischer Push, Merge oder Eingriff in aktive Branches."],
+  ["Repo-übergreifend", "Website, App, Billing und Doku bleiben gemeinsam im Blick."],
+];
+
+const title = "Amanos — Entscheidungen, die nicht versanden";
+const description = "Das lokale Entscheidungs-Gedächtnis für Vibe-Coding. Amanos erkennt Entscheidungen und verfolgt ihre Auswirkungen über mehrere Git-Repositories.";
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f4f3ea" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={Astro.site} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content="Amanos" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={Astro.site} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <main>
+      <header class="nav shell">
+        <a class="brand" href="#top" aria-label="Amanos Startseite">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>amanos</span>
+        </a>
+        <nav aria-label="Hauptnavigation">
+          <a href="#produkt">Produkt</a>
+          <a href="#prinzipien">Prinzipien</a>
+          <a href="#v1">V1 Scope</a>
+        </nav>
+        <a class="nav-cta" href="#v1">Was entsteht <span aria-hidden="true">↗</span></a>
+      </header>
+
+      <section class="hero shell" id="top">
+        <div class="hero-copy">
+          <div class="eyebrow"><span></span> Local-first decision memory</div>
+          <h1>Entscheidungen,<br />die nicht <em>versanden.</em></h1>
+          <p class="hero-lead">Amanos findet Projektentscheidungen in deinen Notizen, verfolgt ihre Auswirkungen über mehrere Repositories und hält den Kontext sauber.</p>
+          <div class="hero-actions">
+            <a class="button button-dark" href="#produkt">So funktioniert’s <span>↓</span></a>
+            <a class="text-link" href="#v1">V1 ansehen <span>→</span></a>
+          </div>
+          <div class="trust-row" aria-label="Produkteigenschaften">
+            <span>✓ Open Source</span><span>✓ Kein Cloud-Zwang</span><span>✓ Git-sicher</span>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-label="Beispiel für Amanos' Entscheidungsfluss">
+          <div class="visual-noise"></div>
+          <div class="decision-card">
+            <div class="card-topline"><span class="dot"></span> Entscheidung erkannt <b>87%</b></div>
+            <p class="decision-id">D-014</p>
+            <h2>Pro-Plan kostet 29 €</h2>
+            <p class="source">notes/pricing.md · Zeile 42–58</p>
+            <div class="status-pill">active</div>
+          </div>
+          <div class="flow-line flow-one"></div><div class="flow-line flow-two"></div>
+          <div class="impact-card impact-one">
+            <span class="file-icon">TS</span>
+            <div><b>website</b><small>src/pricing.tsx</small></div>
+            <span class="candidate">candidate</span>
+          </div>
+          <div class="impact-card impact-two">
+            <span class="file-icon file-md">MD</span>
+            <div><b>billing</b><small>stripe.md</small></div>
+            <span class="candidate">candidate</span>
+          </div>
+          <p class="visual-caption">Eine Entscheidung. Alle Folgen im Blick.</p>
+        </div>
+      </section>
+
+      <section class="ticker" aria-label="Amanos Ablauf">
+        <div><span>ERKENNEN</span><b>✦</b><span>FESTHALTEN</span><b>✦</b><span>VERFOLGEN</span><b>✦</b><span>ERKENNEN</span><b>✦</b><span>FESTHALTEN</span><b>✦</b><span>VERFOLGEN</span></div>
+      </section>
+
+      <section class="section shell" id="produkt">
+        <div class="section-heading">
+          <p class="kicker">Was Amanos tut</p>
+          <h2>Vom losen Satz zum<br />nachvollziehbaren Zustand.</h2>
+          <p>Ein kleiner Cleaner für Kontextreste, offene Folgen und auseinanderlaufende Repositories.</p>
+        </div>
+        <div class="steps-grid">
+          {steps.map((step) => (
+            <article class="step">
+              <span class="step-number">{step.number}</span>
+              <div class="step-symbol" aria-hidden="true">{step.symbol}</div>
+              <h3>{step.title}</h3><p>{step.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section class="dark-section" id="prinzipien">
+        <div class="shell dark-grid">
+          <div class="dark-intro">
+            <p class="kicker light">Gebaut für Vertrauen</p>
+            <h2>Dein Code.<br />Deine Regeln.<br /><em>Dein Rechner.</em></h2>
+            <p>Amanos räumt auf, ohne die Kontrolle zu übernehmen.</p>
+          </div>
+          <div class="principles-list">
+            {principles.map(([principleTitle, text], index) => (
+              <article>
+                <span>0{index + 1}</span><div><h3>{principleTitle}</h3><p>{text}</p></div><b aria-hidden="true">↗</b>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section class="scope-section shell" id="v1">
+        <div class="scope-card">
+          <div>
+            <p class="kicker">Bewusst kleiner V1 Scope</p>
+            <h2>Ein CLI. Vier Befehle.<br />Ein sauberes Gedächtnis.</h2>
+          </div>
+          <div class="terminal" role="img" aria-label="Terminal mit Amanos Befehlen">
+            <div class="terminal-bar"><span></span><span></span><span></span><b>amanos — local</b></div>
+            <pre><code><i>$</i> amanos init ~/workspace
+<i>$</i> amanos scan ~/workspace
+<i>$</i> amanos watch ~/workspace
+<i>$</i> amanos status ~/workspace</code></pre>
+            <p><span>●</span> 3 aktive Entscheidungen · 7 Kandidaten</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-section" id="start">
+        <div class="shell cta-inner">
+          <div>
+            <p class="kicker">Amanos kommt</p>
+            <h2>Weniger Kontextverlust.<br />Mehr <em>Konsequenz.</em></h2>
+          </div>
+          <div class="cta-copy">
+            <p>Die erste Version entsteht als lokales npm-CLI. Kein Dashboard, kein Backend, kein Plattform-Lock-in.</p>
+            <a class="button button-dark" href="#v1">V1 ansehen <span>↑</span></a>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer shell">
+        <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>amanos</span></a>
+        <p>Ein lokales Entscheidungs-Gedächtnis für Vibe-Coding.</p>
+        <span>© {new Date().getFullYear()} amanos</span>
+      </footer>
+    </main>
+  </body>
+</html>

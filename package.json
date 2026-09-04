@@ -1,0 +1,11 @@
+{
+  "name": "amanos",
+  "version": "0.0.1",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "keywords": [],
+  "license": "Apache-2.0",
+  "description": "A local-first decision memory for projects and code."
+}

@@ -1,0 +1,23 @@
+{
+  "name": "amanos-site",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "7.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.19",
+    "@astrojs/check": "^0.9.4",
+    "typescript": "5.9.3"
+  },
+  "type": "module"
+}

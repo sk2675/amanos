@@ -1,0 +1,7 @@
+node_modules/
+.astro/
+out/
+dist/
+.git.generated-backup/
+*.log
+.DS_Store
