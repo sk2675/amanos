@@ -2,23 +2,23 @@
 import Base from "../layouts/Base.astro";
 
 const commands = [
-  ["amanos init", "~/workspace", "Legt das Gedächtnis an: DECISIONS.md als append-only Datei."],
-  ["amanos scan", "~/workspace", "Liest Notizen, erkennt Entscheidungen und markiert mögliche Auswirkungen."],
-  ["amanos watch", "~/workspace", "Beobachtet Änderungen und meldet neue Kandidaten, ohne etwas zu schreiben."],
-  ["amanos status", "~/workspace", "Zeigt aktive Entscheidungen, offene Kandidaten und blockierte Schritte."],
+  ["amanos init", "~/workspace", "Sets up the memory: DECISIONS.md as an append-only file."],
+  ["amanos scan", "~/workspace", "Reads notes, detects decisions, and flags possible impacts."],
+  ["amanos watch", "~/workspace", "Watches for changes and reports new candidates without writing anything."],
+  ["amanos status", "~/workspace", "Shows active decisions, open candidates, and blocked steps."],
 ];
 
 const title = "Docs — Amanos";
-const description = "Aktueller Versionsstand und CLI-Scope von Amanos.";
+const description = "Current version status and CLI scope for Amanos.";
 ---
 
 <Base title={title} description={description} path="/docs">
   <section class="section shell">
     <p class="kicker">Docs</p>
-    <div class="version"><b>V1</b><span>In Arbeit · September 2026</span></div>
-    <h1>Ein CLI.<br /><span class="serif">Vier Befehle.</span></h1>
+    <div class="version"><b>V1</b><span>In progress · September 2026</span></div>
+    <h1>One CLI.<br /><span class="serif">Four commands.</span></h1>
     <p class="intro" style="font-size:16px">
-      Die erste Version entsteht als lokales npm-CLI. Kein Dashboard, kein Backend, kein Plattform-Lock-in.
+      The first version ships as a local npm CLI. No dashboard, no backend, no platform lock-in.
     </p>
 
     <div class="command-list" style="margin-top:40px">

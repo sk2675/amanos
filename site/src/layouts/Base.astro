@@ -12,7 +12,7 @@ const canonical = new URL(path, Astro.site ?? "https://amanos.dev").href;
 ---
 
 <!doctype html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
@@ -22,7 +22,7 @@ const canonical = new URL(path, Astro.site ?? "https://amanos.dev").href;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonical} />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="de_DE" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Amanos" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -31,18 +31,18 @@ const canonical = new URL(path, Astro.site ?? "https://amanos.dev").href;
     <title>{title}</title>
   </head>
   <body>
-    <a class="skip-link" href="#content">Zum Inhalt</a>
+    <a class="skip-link" href="#content">Skip to content</a>
 
     <header class="topbar">
       <div class="shell topbar-inner">
-        <a class="brand-lockup" href="/" aria-label="Amanos Startseite">
+        <a class="brand-lockup" href="/" aria-label="Amanos home">
           <span class="mini-mark" aria-hidden="true"><i></i><i></i><i></i></span>
           <strong>amanos</strong>
         </a>
-        <nav aria-label="Hauptnavigation">
-          <a href="/#kern">Markenkern</a>
+        <nav aria-label="Main navigation">
+          <a href="/#kern">Brand core</a>
           <a href="/#system">System</a>
-          <a href="/#prinzipien">Prinzipien</a>
+          <a href="/#prinzipien">Principles</a>
           <a href="/docs">Docs</a>
         </nav>
       </div>
@@ -60,8 +60,8 @@ const canonical = new URL(path, Astro.site ?? "https://amanos.dev").href;
         </a>
         <p class="footer-note">Local first · no cloud · no silent merges</p>
       </div>
-      <nav aria-label="Rechtliches">
-        <a href="/impressum">Impressum</a>
+      <nav aria-label="Legal">
+        <a href="/impressum">Imprint</a>
         <span>© {new Date().getFullYear()} amanos</span>
       </nav>
     </footer>

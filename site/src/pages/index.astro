@@ -5,75 +5,72 @@ const pillars = [
   {
     symbol: "⌁",
     index: "01 — MEMORY",
-    title: "Kontext bleibt.",
-    text: "Entscheidungen werden zur lesbaren, langlebigen Spur statt zu flüchtigem Chat-Verlauf.",
+    title: "Context stays.",
+    text: "Decisions become a lasting, readable trail instead of a fleeting chat log.",
   },
   {
     symbol: "⌕",
     index: "02 — TRACE",
-    title: "Folgen werden sichtbar.",
-    text: "Amanos verbindet eine Entscheidung mit möglichen Auswirkungen — als Kandidaten, nicht als Behauptungen.",
+    title: "Consequences become visible.",
+    text: "Amanos links each decision to its possible impact — as a candidate, never a claim.",
   },
   {
     symbol: "✓",
     index: "03 — CONTROL",
-    title: "Menschen entscheiden.",
-    text: "Kein stiller Push, kein automatischer Merge, keine unsichtbare Änderung im aktiven Branch.",
+    title: "Humans decide.",
+    text: "No silent push, no automatic merge, no invisible change to an active branch.",
   },
 ];
 
 const statuses = [
-  ["○", "draft", "noch unsicher"],
-  ["●", "active", "gültige Entscheidung"],
-  ["!", "blocked", "nächster Schritt nötig"],
-  ["✓", "done", "lokal umgesetzt"],
-  ["◇", "candidate", "mögliche Auswirkung"],
+  ["○", "draft", "not yet certain"],
+  ["●", "active", "valid decision"],
+  ["!", "blocked", "next step needed"],
+  ["✓", "done", "implemented locally"],
+  ["◇", "candidate", "possible impact"],
 ];
 
 const principles = [
-  ["Local first", "Keine Cloud, kein Konto und kein eigener LLM-Provider."],
-  ["Erklärbar", "Jeder Fund nennt Datei, Zeilen und Confidence."],
-  ["Git-sicher", "Kein automatischer Push, Merge oder Eingriff in aktive Branches."],
-  ["Repo-übergreifend", "Website, App, Billing und Doku bleiben gemeinsam im Blick."],
+  ["Local first", "No cloud, no account, no LLM provider required."],
+  ["Explainable", "Every finding names its file, lines, and confidence."],
+  ["Git-safe", "No automatic push, merge, or changes to active branches."],
+  ["Cross-repo", "Website, app, billing, and docs stay in view together."],
 ];
 
-const title = "Amanos — Entscheidungen, die nicht versanden";
+const title = "Amanos — Decisions that don't fade";
 const description =
-  "Das lokale Entscheidungs-Gedächtnis für Vibe-Coding. Amanos erkennt Entscheidungen in Notizen und verfolgt mögliche Auswirkungen über mehrere Git-Repositories.";
+  "The local decision memory for vibe coding. Amanos finds decisions in notes and tracks their possible impact across git repositories.";
 ---
 
 <Base title={title} description={description} path="/">
   <section class="hero" id="top">
     <div class="shell hero-grid">
       <div>
-        <h1>Entscheidungen,<br />die nicht <span class="serif">versanden.</span></h1>
-        <p class="hero-lead">
-          Amanos erkennt Entscheidungen in deinen Notizen, hält Quelle und Sicherheit fest und verfolgt mögliche Auswirkungen
-          durch mehrere Git-Repositories. Lokal, nachvollziehbar und mit klaren Grenzen.
-        </p>
+        <h1>Decisions,<br />that don't <span class="serif">fade.</span></h1>
+        <p class="hero-lead">Amanos finds decisions in your notes and traces their impact across repos. Local and transparent.</p>
         <div class="hero-actions">
-          <a class="button" href="#system">So arbeitet Amanos <span aria-hidden="true">↓</span></a>
+          <a class="button" href="#system">How Amanos works <span aria-hidden="true">↓</span></a>
         </div>
       </div>
       <div class="hero-meta">
-        <div class="hero-meta-row"><span>Kategorie</span><strong>Local-first Developer Tool</strong></div>
-        <div class="hero-meta-row"><span>Rolle</span><strong>Entscheidungs-Gedächtnis</strong></div>
-        <div class="hero-meta-row"><span>Charakter</span><strong>Aufmerksam · präzise · behutsam</strong></div>
-        <div class="hero-meta-row"><span>Form</span><strong>CLI · npm · ohne Konto</strong></div>
+        <div class="hero-meta-row"><span>Category</span><strong>Local-first Developer Tool</strong></div>
+        <div class="hero-meta-row"><span>Role</span><strong>Decision memory</strong></div>
+        <div class="hero-meta-row"><span>Character</span><strong>Attentive · precise · careful</strong></div>
+        <div class="hero-meta-row"><span>Form</span><strong>CLI · npm · no account</strong></div>
       </div>
     </div>
   </section>
 
   <section class="section shell" id="kern">
-    <p class="kicker">01 / Markenkern</p>
+    <p class="kicker">01 / Brand core</p>
     <div class="statement">
-      <p class="statement-quote">Amanos räumt Kontext auf, <span class="serif">ohne Kontrolle zu übernehmen.</span></p>
+      <p class="statement-quote">Amanos clears up context, <span class="serif">without taking control.</span></p>
       <div class="statement-body">
         <p>
-          Aus verstreuten Notizen wird ein nachvollziehbarer Zustand: DECISIONS.md als lesbare Wahrheit, append-only und bereit
-          für den nächsten Coding-Agenten.
+          Scattered notes become a traceable record: DECISIONS.md, a readable, append-only source of truth ready for your
+          next coding agent.
         </p>
-        <div class="tag-row" aria-label="Markenattribute">
+        <div class="tag-row" aria-label="Brand attributes">
           <span class="tag">Caretaker</span><span class="tag">Investigator</span><span class="tag">Local-first</span><span
             class="tag">Git-safe</span
           >
@@ -98,18 +95,18 @@ const description =
   </section>
 
   <section class="section shell" id="system">
-    <p class="kicker">02 / Produktsystem</p>
-    <h2>Beweise vor <span class="serif">Behauptungen.</span></h2>
+    <p class="kicker">02 / Product system</p>
+    <h2>Evidence before <span class="serif">claims.</span></h2>
     <div class="system-demo">
       <article class="decision-card">
         <div class="decision-top">
-          <span class="pulse" aria-hidden="true"></span><span>Entscheidung erkannt</span><b>Confidence 87%</b>
+          <span class="pulse" aria-hidden="true"></span><span>Decision detected</span><b>Confidence 87%</b>
         </div>
         <p class="decision-id">D-014</p>
-        <h3>Pro-Plan kostet 29 €</h3>
-        <p class="decision-source">notes/pricing.md · Zeile 42–58</p>
+        <h3>Pro plan costs €29</h3>
+        <p class="decision-source">notes/pricing.md · line 42–58</p>
       </article>
-      <div class="status-list" aria-label="Statussystem">
+      <div class="status-list" aria-label="Status system">
         {
           statuses.map(([icon, name, meaning]) => (
             <div class="status-row">
@@ -124,7 +121,7 @@ const description =
       </div>
     </div>
 
-    <div class="terminal" aria-label="Beispiel für eine Amanos Terminalausgabe">
+    <div class="terminal" aria-label="Example Amanos terminal output">
       <div class="terminal-head">
         <i></i><i></i><i></i><span>amanos — local</span>
       </div>
@@ -138,16 +135,16 @@ Last scan: just now
 No files changed. Review DECISIONS.md →</pre>
     </div>
     <p class="source-note">
-      Jeder Fund nennt Datei, Zeilen und Confidence. Kandidaten sind Vorschläge zur Prüfung — keine erledigten Änderungen.
+      Every finding names its file, lines, and confidence. Candidates are suggestions to review — not completed changes.
     </p>
   </section>
 
   <section class="section dark-section" id="prinzipien">
     <div class="shell dark-grid">
       <div>
-        <p class="kicker light">03 / Prinzipien</p>
-        <h2>Dein Code.<br />Deine Regeln.<br /><span class="serif">Dein Rechner.</span></h2>
-        <p class="intro" style="font-size:16px">Amanos arbeitet dort, wo dein Workspace ohnehin liegt: auf deiner Maschine.</p>
+        <p class="kicker light">03 / Principles</p>
+        <h2>Your code.<br />Your rules.<br /><span class="serif">Your machine.</span></h2>
+        <p class="intro" style="font-size:16px">Amanos runs where your workspace already lives: on your machine.</p>
       </div>
       <div class="principles">
         {
@@ -172,9 +169,9 @@ No files changed. Review DECISIONS.md →</pre>
         <rect x="46" y="10" width="28" height="85" rx="14" fill="#ec6b3b"></rect>
         <rect x="82" y="28" width="28" height="67" rx="14" fill="#ec6b3b"></rect>
       </svg>
-      <h2>Kontext geht.<br /><span class="serif">Amanos bleibt.</span></h2>
+      <h2>Context fades.<br /><span class="serif">Amanos stays.</span></h2>
       <div class="hero-actions">
-        <a class="button" href="#top">Von vorn lesen <span aria-hidden="true">↑</span></a>
+        <a class="button" href="#top">Read from the top <span aria-hidden="true">↑</span></a>
       </div>
     </div>
   </section>
