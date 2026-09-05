@@ -1,0 +1,249 @@
+---
+const files = [
+  { label: ".md", glyph: "≡", top: "16%", left: "12%", drift: "17s" },
+  { label: ".json", glyph: "{}", top: "58%", left: "26%", drift: "21s" },
+  { label: ".html", glyph: "</>", top: "28%", left: "56%", drift: "19s" },
+  { label: ".csv", glyph: "⊞", top: "68%", left: "66%", drift: "23s" },
+  { label: ".md", glyph: "≡", top: "44%", left: "82%", drift: "16s" },
+];
+---
+
+<figure class="aquarium" aria-label="Amanos sweeps through scattered files and marks each one as read on contact">
+  <div class="aquarium-glass" aria-hidden="true">
+    <span class="bubble" style="left: 14%; --size: 7px; --rise: 11s; --lag: 0s"></span>
+    <span class="bubble" style="left: 33%; --size: 11px; --rise: 15s; --lag: 3.5s"></span>
+    <span class="bubble" style="left: 52%; --size: 5px; --rise: 9s; --lag: 6s"></span>
+    <span class="bubble" style="left: 71%; --size: 9px; --rise: 13s; --lag: 1.8s"></span>
+    <span class="bubble" style="left: 88%; --size: 6px; --rise: 10s; --lag: 8.2s"></span>
+
+    {
+      files.map((file) => (
+        <span class="file" style={`top:${file.top}; left:${file.left}; --drift:${file.drift}`}>
+          <b>{file.glyph}</b>
+          <em>{file.label}</em>
+          <i class="check">✓</i>
+        </span>
+      ))
+    }
+
+    <span class="swimmer">
+      <span class="swimmer-flip">
+        <svg viewBox="0 0 120 105" aria-hidden="true">
+          <rect x="10" y="44" width="28" height="51" rx="14"></rect>
+          <rect x="46" y="10" width="28" height="85" rx="14"></rect>
+          <rect x="82" y="28" width="28" height="67" rx="14"></rect>
+        </svg>
+      </span>
+    </span>
+  </div>
+</figure>
+
+<script>
+  function initAquarium(root: HTMLElement) {
+    const glass = root.querySelector<HTMLElement>(".aquarium-glass");
+    const swimmer = root.querySelector<HTMLElement>(".swimmer");
+    const flip = root.querySelector<HTMLElement>(".swimmer-flip");
+    const files = Array.from(root.querySelectorAll<HTMLElement>(".file"));
+    if (!glass || !swimmer || !flip) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      swimmer.classList.add("is-settled");
+      files.forEach((file) => file.classList.add("cleaned"));
+      return;
+    }
+
+    const SW = 54;
+    const SH = 47;
+    const SPEED = 76; // px per second
+
+    let w = glass.clientWidth;
+    let h = glass.clientHeight;
+
+    let x = -SW - 30;
+    let y = h * 0.38;
+    let angle = -0.32; // radians, gentle downward entry
+    let vx = Math.cos(angle) * SPEED;
+    let vy = Math.sin(angle) * SPEED;
+    let entered = false;
+    let resetTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function resize() {
+      w = glass!.clientWidth;
+      h = glass!.clientHeight;
+    }
+    window.addEventListener("resize", resize);
+
+    let lastT: number | null = null;
+    function frame(t: number) {
+      if (lastT === null) lastT = t;
+      const dt = Math.min((t - lastT) / 1000, 0.05);
+      lastT = t;
+
+      x += vx * dt;
+      y += vy * dt;
+
+      if (!entered && x >= 0) entered = true;
+
+      if (entered && x <= 0) {
+        x = 0;
+        vx = Math.abs(vx);
+      }
+      if (x + SW >= w) {
+        x = w - SW;
+        vx = -Math.abs(vx);
+      }
+      if (y <= 0) {
+        y = 0;
+        vy = Math.abs(vy);
+      }
+      if (y + SH >= h) {
+        y = h - SH;
+        vy = -Math.abs(vy);
+      }
+
+      swimmer!.style.left = `${x}px`;
+      swimmer!.style.top = `${y}px`;
+      flip!.style.transform = vx < 0 ? "scaleX(-1)" : "scaleX(1)";
+
+      const glassRect = glass!.getBoundingClientRect();
+      for (const file of files) {
+        if (file.classList.contains("cleaned")) continue;
+        const fr = file.getBoundingClientRect();
+        const left = fr.left - glassRect.left;
+        const top = fr.top - glassRect.top;
+        const right = left + fr.width;
+        const bottom = top + fr.height;
+        const hit = x < right && x + SW > left && y < bottom && y + SH > top;
+        if (hit) {
+          file.classList.add("cleaned");
+          vx = -vx;
+          vy = -vy;
+        }
+      }
+
+      if (!resetTimer && files.every((file) => file.classList.contains("cleaned"))) {
+        resetTimer = setTimeout(() => {
+          files.forEach((file) => file.classList.remove("cleaned"));
+          resetTimer = null;
+        }, 2200);
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  document.querySelectorAll<HTMLElement>(".aquarium").forEach(initAquarium);
+</script>
+
+<style>
+  .aquarium {
+    display: grid;
+    margin: 0;
+    border: 1px solid var(--ink);
+    box-shadow: var(--shadow);
+    background: var(--paper);
+  }
+
+  .aquarium-glass {
+    position: relative;
+    aspect-ratio: 5 / 4;
+    min-height: 300px;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgba(236, 107, 59, 0.09), transparent 42%),
+      repeating-linear-gradient(90deg, var(--soft-line) 0 1px, transparent 1px 46px),
+      var(--paper-deep);
+  }
+
+  /* Rising bubbles */
+  .bubble {
+    position: absolute;
+    bottom: -14px;
+    width: var(--size);
+    height: var(--size);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    animation: rise var(--rise) var(--lag) infinite linear;
+  }
+
+  @keyframes rise {
+    0% { transform: translateY(0) scale(0.7); opacity: 0; }
+    18% { opacity: 1; }
+    100% { transform: translateY(-360px) scale(1.25); opacity: 0; }
+  }
+
+  /* Drifting files */
+  .file {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    gap: 2px;
+    width: 62px;
+    height: 62px;
+    color: var(--fog-ink);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    animation: drift var(--drift) ease-in-out infinite alternate;
+    transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, scale 0.3s ease;
+  }
+  .file:hover { animation-play-state: paused; border-color: var(--ink); z-index: 1; }
+  .file b { font: 15px var(--mono); font-weight: 400; }
+  .file em { font: 9px var(--mono); font-style: normal; letter-spacing: 0.08em; }
+
+  .file.cleaned {
+    color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 12%, var(--paper));
+    border-color: var(--orange);
+    scale: 0.96;
+  }
+
+  .file .check {
+    position: absolute;
+    top: -9px;
+    right: -9px;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    color: var(--paper);
+    background: var(--orange);
+    border-radius: 50%;
+    font: 10px var(--mono);
+    font-style: normal;
+    transform: scale(0);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .file.cleaned .check { transform: scale(1); }
+
+  @keyframes drift {
+    0% { translate: 0 0; rotate: -4deg; }
+    50% { translate: 14px 18px; rotate: 3deg; }
+    100% { translate: -10px 10px; rotate: -2deg; }
+  }
+
+  /* The mark, swimming */
+  .swimmer {
+    position: absolute;
+    top: 38%;
+    left: -74px;
+    width: 54px;
+  }
+  .swimmer-flip { display: block; }
+  .swimmer svg { width: 100%; height: auto; animation: wiggle 2.6s ease-in-out infinite; }
+  .swimmer rect { fill: var(--orange); }
+
+  .swimmer.is-settled { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+  @keyframes wiggle {
+    0%, 100% { rotate: -14deg; }
+    50% { rotate: -22deg; }
+  }
+
+  @media (max-width: 620px) {
+    .aquarium-glass { aspect-ratio: 4 / 3; min-height: 240px; }
+    .file { width: 52px; height: 52px; }
+  }
+</style>
