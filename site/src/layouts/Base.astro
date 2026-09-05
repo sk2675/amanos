@@ -1,0 +1,70 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+  path?: string;
+}
+
+const { title, description, path = "/" } = Astro.props;
+const canonical = new URL(path, Astro.site ?? "https://amanos.dev").href;
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f4f3ea" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content="Amanos" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Zum Inhalt</a>
+
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <a class="brand-lockup" href="/" aria-label="Amanos Startseite">
+          <span class="mini-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <strong>amanos</strong><small>Local decision memory</small>
+        </a>
+        <nav aria-label="Hauptnavigation">
+          <a href="/#kern">Markenkern</a>
+          <a href="/#system">System</a>
+          <a href="/#prinzipien">Prinzipien</a>
+          <a href="/#v1">V1</a>
+        </nav>
+        <a class="topbar-cta" href="/#v1">V1 ansehen</a>
+      </div>
+    </header>
+
+    <main id="content">
+      <slot />
+    </main>
+
+    <footer class="shell footer">
+      <div>
+        <a class="brand-lockup" href="/">
+          <span class="mini-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <strong>amanos</strong>
+        </a>
+        <p class="footer-note">Local first · no cloud · no silent merges</p>
+      </div>
+      <nav aria-label="Rechtliches">
+        <a href="/impressum">Impressum</a>
+        <span>© {new Date().getFullYear()} amanos</span>
+      </nav>
+    </footer>
+  </body>
+</html>
