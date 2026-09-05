@@ -37,20 +37,6 @@ const principles = [
   ["Repo-übergreifend", "Website, App, Billing und Doku bleiben gemeinsam im Blick."],
 ];
 
-const commands = [
-  ["amanos init", "~/workspace", "Legt das Gedächtnis an: DECISIONS.md als append-only Datei."],
-  ["amanos scan", "~/workspace", "Liest Notizen, erkennt Entscheidungen und markiert mögliche Auswirkungen."],
-  ["amanos watch", "~/workspace", "Beobachtet Änderungen und meldet neue Kandidaten, ohne etwas zu schreiben."],
-  ["amanos status", "~/workspace", "Zeigt aktive Entscheidungen, offene Kandidaten und blockierte Schritte."],
-];
-
-const checks = [
-  ["Kontrolle bleibt sichtbar.", "Kein Push, kein Merge und keine Änderung ohne deine Freigabe."],
-  ["Quelle vor Sicherheit.", "Entscheidung, Pfad, Zeilen und Confidence erscheinen gemeinsam."],
-  ["Status ist mehr als Farbe.", "Jeder Zustand hat Text und Icon — nicht nur einen Farbton."],
-  ["Worte bleiben ehrlich.", "„Kandidat“ statt Gewissheit, „vorbereitet“ statt automatisch erledigt."],
-];
-
 const title = "Amanos — Entscheidungen, die nicht versanden";
 const description =
   "Das lokale Entscheidungs-Gedächtnis für Vibe-Coding. Amanos erkennt Entscheidungen in Notizen und verfolgt mögliche Auswirkungen über mehrere Git-Repositories.";
@@ -60,7 +46,6 @@ const description =
   <section class="hero" id="top">
     <div class="shell hero-grid">
       <div>
-        <div class="version"><b>V1</b><span>In Arbeit · September 2026</span></div>
         <h1>Entscheidungen,<br />die nicht <span class="serif">versanden.</span></h1>
         <p class="hero-lead">
           Amanos erkennt Entscheidungen in deinen Notizen, hält Quelle und Sicherheit fest und verfolgt mögliche Auswirkungen
@@ -68,7 +53,6 @@ const description =
         </p>
         <div class="hero-actions">
           <a class="button" href="#system">So arbeitet Amanos <span aria-hidden="true">↓</span></a>
-          <a class="text-link" href="#v1">V1 Scope <span aria-hidden="true">→</span></a>
         </div>
       </div>
       <div class="hero-meta">
@@ -178,45 +162,6 @@ No files changed. Review DECISIONS.md →</pre>
           ))
         }
       </div>
-    </div>
-  </section>
-
-  <section class="section shell" id="v1">
-    <p class="kicker">04 / V1 Scope</p>
-    <div class="scope-grid">
-      <div>
-        <h2>Ein CLI.<br /><span class="serif">Vier Befehle.</span></h2>
-        <p class="intro" style="font-size:16px">
-          Die erste Version entsteht als lokales npm-CLI. Kein Dashboard, kein Backend, kein Plattform-Lock-in.
-        </p>
-      </div>
-      <div class="command-list">
-        {
-          commands.map(([command, argument, text]) => (
-            <div>
-              <code>
-                <b>$</b> {command} {argument}
-              </code>
-              <p>{text}</p>
-            </div>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <section class="section shell" id="leitplanken">
-    <p class="kicker">05 / Leitplanken</p>
-    <h2>Was Amanos <span class="serif">nicht</span> tut.</h2>
-    <div class="checklist">
-      {
-        checks.map(([name, text]) => (
-          <article class="check">
-            <h3>{name}</h3>
-            <p>{text}</p>
-          </article>
-        ))
-      }
     </div>
   </section>
 

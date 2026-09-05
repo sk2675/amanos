@@ -154,19 +154,12 @@ h3 { margin-bottom: 12px; font-size: 22px; line-height: 1.05; }
 .principles h3 { margin-bottom: 8px; font-size: 20px; }
 .principles p { margin: 0; color: var(--fog); font-size: 14px; }
 
-/* V1 Scope */
-.scope-grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(40px, 6vw, 90px); align-items: start; }
+/* Docs */
 .command-list { border-top: 1px solid var(--line); }
 .command-list div { display: grid; grid-template-columns: 210px 1fr; gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--line); }
 .command-list code { font: 12px var(--mono); }
 .command-list code b { color: var(--orange); font-weight: 400; }
 .command-list p { margin: 0; color: var(--fog-ink); font-size: 14px; }
-
-/* Leitplanken */
-.checklist { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; border: 1px solid var(--line); background: var(--line); counter-reset: check; }
-.check { position: relative; min-height: 150px; padding: 28px 28px 28px 76px; background: var(--paper); }
-.check::before { counter-increment: check; content: "0" counter(check); position: absolute; left: 26px; top: 28px; color: var(--orange); font: 11px var(--mono); }
-.check p { margin: 0; color: var(--fog-ink); font-size: 13px; }
 
 /* Abschluss */
 .closing { display: grid; place-items: center; text-align: center; }
@@ -195,7 +188,7 @@ h3 { margin-bottom: 12px; font-size: 22px; line-height: 1.05; }
 
 @media (max-width: 920px) {
   .shell { width: min(1440px, calc(100% - 56px)); }
-  .hero-grid, .statement, .system-demo, .dark-grid, .scope-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero-grid, .statement, .system-demo, .dark-grid { grid-template-columns: minmax(0, 1fr); }
   .hero-meta { margin-top: 54px; }
   .pillars { grid-template-columns: 1fr; }
   .pillar { min-height: 240px; border-right: 0; border-bottom: 1px solid var(--ink); }
@@ -208,7 +201,6 @@ h3 { margin-bottom: 12px; font-size: 22px; line-height: 1.05; }
   .shell { width: min(1440px, calc(100% - 32px)); }
   .topbar-inner { height: 64px; }
   .hero::after { width: 220px; height: 220px; right: -90px; }
-  .checklist { grid-template-columns: 1fr; }
   .command-list div { grid-template-columns: 1fr; gap: 8px; }
   .status-row { grid-template-columns: 28px 75px 1fr; padding: 14px; }
   .footer { grid-template-columns: 1fr; }
