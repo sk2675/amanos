@@ -20,6 +20,8 @@ export interface WorkspaceConfig {
   /** Seconds without a file change before the watcher starts a scan. */
   readonly quietPeriodSeconds: number;
   readonly activation: ActivationConfig;
+  /** Decision phrases of this project, matched on top of the built-in DE/EN list. */
+  readonly extraPhrases: readonly string[];
   /** Name of the coding agent adapter; only used from phase 2 onwards. */
   readonly agent: string;
   /** Fields written by another amanos version, kept verbatim. */
@@ -32,6 +34,7 @@ export const DEFAULT_CONFIG: WorkspaceConfig = {
     defaultStatus: "active",
     draftBelowConfidence: 70,
   },
+  extraPhrases: [],
   agent: "codex",
 };
 
@@ -61,10 +64,24 @@ export function parseConfig(file: string, text: string): WorkspaceConfig {
           max: 100,
         }) ?? DEFAULT_CONFIG.activation.draftBelowConfidence,
     },
+    extraPhrases: readPhrases(file, reader.raw["extraPhrases"]),
     agent: reader.string("agent", DEFAULT_CONFIG.agent),
   };
 
   return { ...reader.raw, ...known } as WorkspaceConfig;
+}
+
+/** The phrase list is the one place where the user extends the parser. */
+function readPhrases(file: string, raw: unknown): readonly string[] {
+  if (raw === undefined) {
+    return DEFAULT_CONFIG.extraPhrases;
+  }
+  if (!Array.isArray(raw) || raw.some((entry) => typeof entry !== "string" || entry.trim() === "")) {
+    throw new AmanosError(
+      `${file}: "extraPhrases" must be an array of non-empty strings, found ${JSON.stringify(raw)}.`,
+    );
+  }
+  return raw as readonly string[];
 }
 
 /** Reads the config; a missing file is reported as "run amanos init". */
