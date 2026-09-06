@@ -205,6 +205,44 @@ describe("appendDecisions", () => {
     expect(result.appended.map(({ id }) => id)).toEqual(["D-010"]);
     expect((await readState(paths)).nextDecisionNumber).toBe(11);
   });
+
+  it("links two pricing decisions as a possible replacement without changing status", async () => {
+    const paths = await storeWith(DECISIONS_HEADER);
+    await appendDecisions(
+      paths,
+      [finding("notes/pricing.md", "We decided the Pro plan costs 19 EUR per month.")],
+    );
+
+    const result = await appendDecisions(
+      paths,
+      [finding("notes/pricing.md", "From now on the Pro plan costs 29 EUR per month.")],
+    );
+    const content = await readFile(paths.decisions, "utf8");
+    const parsed = parseDecisionFile(content);
+
+    expect(result.appended[0]?.possibleReplacementFor).toBe("D-001");
+    expect(content).toContain("Möglicher Ersatz für: D-001");
+    expect(content).toContain("Möglicherweise abgelöst durch: D-002");
+    expect(parsed.decisions.find(({ id }) => id === "D-001")?.status).toBe("active");
+  });
+
+  it("does not link unrelated decisions through generic decision words", async () => {
+    const paths = await storeWith(DECISIONS_HEADER);
+    await appendDecisions(
+      paths,
+      [finding("notes/design.md", "We decided the website buttons will be blue.")],
+    );
+
+    const result = await appendDecisions(
+      paths,
+      [finding("notes/hosting.md", "We decided the website will deploy on AWS.")],
+    );
+    const content = await readFile(paths.decisions, "utf8");
+
+    expect(result.appended[0]?.possibleReplacementFor).toBeUndefined();
+    expect(content).not.toContain("Möglicher Ersatz für:");
+    expect(content).not.toContain("Möglicherweise abgelöst durch:");
+  });
 });
 
 describe("updateDecisionStatus", () => {

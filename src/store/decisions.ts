@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 
 import { writeFileAtomic } from "../atomic.js";
 import { AmanosError } from "../errors.js";
+import { replacementSimilarity, type TopicReference } from "../keywords.js";
 import { duplicateKey, type Decision } from "../parser/index.js";
 import {
   readState,
@@ -54,6 +55,7 @@ export interface DecisionFile {
 export interface AppendedDecision {
   readonly id: string;
   readonly decision: Decision;
+  readonly possibleReplacementFor?: string;
 }
 
 export interface AppendDecisionsResult {
@@ -68,6 +70,19 @@ export interface StatusUpdateResult {
   readonly status: DecisionStatus;
   readonly changed: boolean;
 }
+
+export interface DecisionImpactUpdate {
+  readonly id: string;
+  /** Ranked, workspace-relative display paths. */
+  readonly candidatePaths: readonly string[];
+}
+
+export interface ImpactUpdateResult {
+  readonly added: number;
+  readonly changedDecisions: number;
+}
+
+export const MAX_IMPACT_CANDIDATES = 10;
 
 const ENTRY_HEADING = /^##[ \t]+(D-(\d+))[ \t]+(?:—|–|-)[ \t]+(.+?)[ \t]*\r?$/gm;
 const USED_ID = /^##[ \t]+(D-(\d+))\b/gm;
@@ -156,8 +171,14 @@ export async function appendDecisions(
       return [duplicateKey(sourcePath(entry.source), entry.title)];
     }),
   );
-  const appended: AppendedDecision[] = [];
-  let content = file.content;
+  const planned: PlannedDecision[] = [];
+  const previous: ReplacementCandidate[] = file.decisions.map((entry) => ({
+    id: entry.id,
+    number: entry.number,
+    title: entry.title,
+    source: entry.source,
+  }));
+  const supersededExisting = new Map<string, string[]>();
   let candidate = Math.max(state.nextDecisionNumber, file.highestDecisionNumber + 1);
 
   for (const decision of findings) {
@@ -172,8 +193,32 @@ export async function appendDecisions(
 
     while (usedNumbers.has(candidate)) candidate += 1;
     const id = formatDecisionId(candidate);
-    content = appendBlock(content, formatDecision(id, decision, statement));
-    appended.push({ id, decision });
+    const replacement = bestReplacement(
+      { title: statement, source: decision.location },
+      previous,
+    );
+    const item: PlannedDecision = {
+      id,
+      number: candidate,
+      decision,
+      statement,
+      supersededBy: [],
+      ...(replacement === undefined ? {} : { possibleReplacementFor: replacement.id }),
+    };
+    planned.push(item);
+
+    if (replacement !== undefined) {
+      const earlierPlan = planned.find((entry) => entry.id === replacement.id);
+      if (earlierPlan === undefined) {
+        const linked = supersededExisting.get(replacement.id) ?? [];
+        linked.push(id);
+        supersededExisting.set(replacement.id, linked);
+      } else {
+        earlierPlan.supersededBy.push(id);
+      }
+    }
+
+    previous.push({ id, number: candidate, title: statement, source: decision.location });
     known.add(key);
     usedNumbers.add(candidate);
     candidate += 1;
@@ -183,7 +228,11 @@ export async function appendDecisions(
 
   // A no-op scan does not touch DECISIONS.md. This is stronger than merely
   // producing equal text: timestamps and file watchers remain undisturbed.
-  if (appended.length > 0) {
+  if (planned.length > 0) {
+    let content = addSupersededNotes(file, supersededExisting);
+    for (const item of planned) {
+      content = appendBlock(content, formatDecision(item));
+    }
     await writeFileAtomic(paths.decisions, content);
   }
   if (state.nextDecisionNumber !== nextDecisionNumber) {
@@ -191,8 +240,12 @@ export async function appendDecisions(
   }
 
   return {
-    appended,
-    skipped: findings.length - appended.length,
+    appended: planned.map(({ id, decision, possibleReplacementFor }) => ({
+      id,
+      decision,
+      ...(possibleReplacementFor === undefined ? {} : { possibleReplacementFor }),
+    })),
+    skipped: findings.length - planned.length,
     nextDecisionNumber,
   };
 }
@@ -229,6 +282,74 @@ export async function updateDecisionStatus(
   return { id, previousStatus: entry.status, status, changed: true };
 }
 
+/**
+ * Adds ranked impact candidates to their decision sections. Machine-generated
+ * candidate lines are de-duplicated and capped, while checked boxes and every
+ * handwritten line remain intact.
+ */
+export async function updateDecisionImpacts(
+  paths: WorkspacePaths,
+  updates: readonly DecisionImpactUpdate[],
+): Promise<ImpactUpdateResult> {
+  const file = await readDecisionFile(paths);
+  const edits: TextEdit[] = [];
+  let added = 0;
+
+  for (const update of updates) {
+    const entry = file.decisions.find((decision) => decision.id === update.id);
+    if (entry === undefined) continue;
+    const section = impactSection(file.content, entry);
+    if (section === undefined) continue;
+
+    const rows = candidateRows(section.body);
+    const existing = existingCandidates(section.body);
+    const ranked = unique(update.candidatePaths.map(oneLine).filter((path) => path !== "")).slice(
+      0,
+      MAX_IMPACT_CANDIDATES,
+    );
+    const retainedChecked = [...existing]
+      .filter(([path, checked]) => checked && !ranked.includes(path))
+      .map(([path]) => path)
+      .sort(compareText);
+    const pathsToWrite = [...ranked, ...retainedChecked];
+    const additions = ranked.filter((path) => !existing.has(path));
+    const unchanged =
+      rows.length === pathsToWrite.length &&
+      rows.every(
+        (row, index) =>
+          row.path === pathsToWrite[index] && row.checked === (existing.get(row.path) === true),
+      );
+    if (unchanged || (rows.length === 0 && pathsToWrite.length === 0)) continue;
+
+    const lines = pathsToWrite.map(
+      (path) => `- [${existing.get(path) === true ? "x" : " "}] candidate · ${path}`,
+    );
+    if (lines.length === 0) lines.push("- [ ] Noch nicht analysiert");
+    const withoutMachineLines = section.body.replace(MACHINE_IMPACT_LINE, "");
+    const manual = withoutMachineLines.replace(/^(?:\r\n|\n|\r)+/, "");
+    const newline = newlineOf(file.content);
+    const replacement =
+      `${newline}${newline}${lines.join(newline)}${newline}` +
+      (manual === ""
+        ? entry.end < file.content.length
+          ? newline
+          : ""
+        : `${newline}${manual}`);
+
+    edits.push({ start: section.bodyStart, end: section.bodyEnd, replacement });
+    added += additions.length;
+  }
+
+  if (edits.length === 0) return { added: 0, changedDecisions: 0 };
+
+  let content = file.content;
+  for (const edit of edits.sort((left, right) => right.start - left.start)) {
+    content = content.slice(0, edit.start) + edit.replacement + content.slice(edit.end);
+  }
+  await writeFileAtomic(paths.decisions, content);
+  return { added, changedDecisions: edits.length };
+}
+
 /** D-1 and D-001 both become the canonical fixed-width form D-001. */
 export function formatDecisionId(number: number): string {
   if (!Number.isSafeInteger(number) || number < 1) {
@@ -237,18 +358,127 @@ export function formatDecisionId(number: number): string {
   return `D-${String(number).padStart(3, "0")}`;
 }
 
-function formatDecision(id: string, decision: Decision, statement: string): string {
+interface ReplacementCandidate extends TopicReference {
+  readonly id: string;
+  readonly number: number;
+}
+
+interface PlannedDecision {
+  readonly id: string;
+  readonly number: number;
+  readonly decision: Decision;
+  readonly statement: string;
+  readonly possibleReplacementFor?: string;
+  readonly supersededBy: string[];
+}
+
+interface TextEdit {
+  readonly start: number;
+  readonly end: number;
+  readonly replacement: string;
+}
+
+interface ImpactSection {
+  readonly body: string;
+  readonly bodyStart: number;
+  readonly bodyEnd: number;
+}
+
+const IMPACT_HEADING = /^###[ \t]+Auswirkungen[ \t]*\r?$/m;
+const MACHINE_IMPACT_LINE =
+  /^(?:- \[[ xX]\] candidate · [^\r\n]+|- \[ \] Noch nicht analysiert)[ \t]*(?:\r\n|\n|\r|$)/gm;
+const CANDIDATE_LINE = /^- \[([ xX])\] candidate · ([^\r\n]+?)[ \t]*\r?$/gm;
+
+function impactSection(content: string, entry: StoredDecision): ImpactSection | undefined {
+  const block = content.slice(entry.start, entry.end);
+  const heading = IMPACT_HEADING.exec(block);
+  if (heading === null) return undefined;
+
+  const bodyStart = entry.start + heading.index + heading[0].length;
+  const afterHeading = content.slice(bodyStart, entry.end);
+  const nextSubheading = /^###[ \t]+.+$/m.exec(afterHeading);
+  const bodyEnd = nextSubheading === null ? entry.end : bodyStart + nextSubheading.index;
+  return { body: content.slice(bodyStart, bodyEnd), bodyStart, bodyEnd };
+}
+
+function existingCandidates(body: string): Map<string, boolean> {
+  const candidates = new Map<string, boolean>();
+  for (const row of candidateRows(body)) {
+    candidates.set(row.path, candidates.get(row.path) === true || row.checked);
+  }
+  return candidates;
+}
+
+function candidateRows(body: string): readonly { readonly path: string; readonly checked: boolean }[] {
+  return [...body.matchAll(CANDIDATE_LINE)].map((match) => ({
+    path: (match[2] as string).trim(),
+    checked: (match[1] as string).toLowerCase() === "x",
+  }));
+}
+
+function unique(values: readonly string[]): string[] {
+  return [...new Set(values)];
+}
+
+function compareText(left: string, right: string): number {
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
+}
+
+function bestReplacement(
+  current: TopicReference,
+  previous: readonly ReplacementCandidate[],
+): ReplacementCandidate | undefined {
+  return previous
+    .map((candidate) => ({ candidate, score: replacementSimilarity(current, candidate) }))
+    .filter(({ score }) => score > 0)
+    .sort((left, right) => right.score - left.score || right.candidate.number - left.candidate.number)
+    .at(0)?.candidate;
+}
+
+function addSupersededNotes(
+  file: DecisionFile,
+  superseded: ReadonlyMap<string, readonly string[]>,
+): string {
+  let content = file.content;
+  const edits = file.decisions
+    .flatMap((entry) => {
+      const ids = superseded.get(entry.id) ?? [];
+      const body = file.content.slice(entry.start, entry.end);
+      const notes = ids
+        .map((id) => `Möglicherweise abgelöst durch: ${id}`)
+        .filter((note) => !body.includes(note));
+      return notes.length === 0 ? [] : [{ offset: entry.end, notes }];
+    })
+    .sort((left, right) => right.offset - left.offset);
+
+  for (const edit of edits) {
+    content = insertBlock(content, edit.offset, edit.notes.join(newlineOf(content)));
+  }
+  return content;
+}
+
+function formatDecision(item: PlannedDecision): string {
+  const references = [
+    ...(item.possibleReplacementFor === undefined
+      ? []
+      : [`Möglicher Ersatz für: ${item.possibleReplacementFor}`]),
+  ];
+  const successors = item.supersededBy.map((id) => `Möglicherweise abgelöst durch: ${id}`);
+
   return [
-    `## ${id} — ${statement}`,
+    `## ${item.id} — ${item.statement}`,
     "",
-    `Status: ${decision.status}`,
-    `Confidence: ${Math.round(decision.confidence)} %`,
-    `Erkannt: ${dateOnly(decision.detectedAt)}`,
-    `Quelle: ${oneLine(decision.location)}`,
+    `Status: ${item.decision.status}`,
+    `Confidence: ${Math.round(item.decision.confidence)} %`,
+    `Erkannt: ${dateOnly(item.decision.detectedAt)}`,
+    `Quelle: ${oneLine(item.decision.location)}`,
+    ...references,
     "",
     "### Auswirkungen",
     "",
     "- [ ] Noch nicht analysiert",
+    ...(successors.length === 0 ? [] : ["", ...successors]),
   ].join("\n");
 }
 

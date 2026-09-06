@@ -8,15 +8,19 @@ export async function readStatus(_workspace: Workspace): Promise<void> {
 
 export {
   DECISIONS_HEADER,
+  MAX_IMPACT_CANDIDATES,
   appendDecisions,
   formatDecisionId,
   parseDecisionFile,
   readDecisionFile,
   serialiseDecisionFile,
+  updateDecisionImpacts,
   updateDecisionStatus,
   type AppendDecisionsResult,
   type AppendedDecision,
   type DecisionFile,
+  type DecisionImpactUpdate,
+  type ImpactUpdateResult,
   type StatusUpdateResult,
   type StoredDecision,
 } from "./decisions.js";
