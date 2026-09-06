@@ -16,6 +16,7 @@
     "build": "npm run clean && tsc -p tsconfig.json",
     "check:package": "node scripts/check-package.mjs",
     "check:content": "node scripts/check-site-content.mjs",
+    "check:quickstart": "node scripts/check-quickstart.mjs",
     "clean": "node scripts/clean.mjs",
     "prepublishOnly": "npm run build && npm run check:package",
     "smoke:package": "node scripts/smoke-package.mjs",
