@@ -2,10 +2,27 @@
   "name": "amanos",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
+  "bin": {
+    "amanos": "dist/cli.js"
+  },
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
   "keywords": [],
   "license": "Apache-2.0",
-  "description": "A local-first decision memory for projects and code."
+  "description": "A local-first decision memory for projects and code.",
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
 }
