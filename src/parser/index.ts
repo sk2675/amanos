@@ -1,4 +1,5 @@
 import { NotImplementedError } from "../errors.js";
+import type { DecisionStatus } from "../workspace/config.js";
 
 /** A decision found in free text, with enough provenance to show it in DECISIONS.md. */
 export interface Decision {
@@ -8,7 +9,7 @@ export interface Decision {
   readonly endLine: number;
   readonly detectedAt: string;
   readonly confidence: number;
-  readonly status: "active" | "draft" | "blocked" | "done";
+  readonly status: DecisionStatus;
 }
 
 /** Detects decisions in a single text file's content. */
