@@ -45,7 +45,9 @@ Der Abgleich des V1-Umfangs und der Release-Statusquellen ist unter [`docs/v1-ve
 
 ## Beispiel-Workflow
 
-Das Beispiel greift die Entscheidung der Landingpage auf. Der vorhandene Workspace `~/workspace` enthält ein Git-Repository `app` mit `src/api/rate-limit.ts`. In `notes/api.md` steht in Zeile 8:
+Eine reproduzierbare, lauffähige Version dieses Beispiels liegt unter [`examples/demo`](./examples/demo): zwei kleine Git-Repositories und eine zweisprachige Notiz, zusammen mit der exakten `DECISIONS.md` und Terminal-Ausgabe, die `amanos init` und `amanos scan` daraus erzeugen. `npm run check:example` führt das Beispiel aus und vergleicht die tatsächliche Ausgabe gegen diese Referenzdateien; CI schlägt fehl, sobald beide voneinander abweichen.
+
+Das folgende Beispiel greift die Entscheidung der Landingpage auf. Der vorhandene Workspace `~/workspace` enthält ein Git-Repository `app` mit `src/api/rate-limit.ts`. In `notes/api.md` steht in Zeile 8:
 
 ```md
 Decision: API rate limit: 100 req/min.

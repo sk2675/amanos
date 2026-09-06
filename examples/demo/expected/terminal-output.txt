@@ -1,0 +1,11 @@
+$ amanos init <WORKSPACE_ROOT>
+  created DECISIONS.md
+  created .amanos/config.json
+  created .amanos/state.json
+Initialised the amanos workspace in <WORKSPACE_ROOT>.
+
+$ amanos scan <WORKSPACE_ROOT>
+Read 2 source files.
+Found 2 new decisions.
+Found 4 new candidate impacts.
+Completed in <DURATION_MS> ms.

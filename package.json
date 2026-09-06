@@ -16,6 +16,7 @@
     "build": "npm run clean && tsc -p tsconfig.json",
     "check:package": "node scripts/check-package.mjs",
     "check:content": "node scripts/check-site-content.mjs",
+    "check:example": "node scripts/check-example.mjs",
     "check:quickstart": "node scripts/check-quickstart.mjs",
     "clean": "node scripts/clean.mjs",
     "prepublishOnly": "npm run build && npm run check:package",
@@ -23,7 +24,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "verify:release": "npm run verify:v1 && npm run check:package",
-    "verify:v1": "npm run typecheck && npm test && npm run build && npm run check:content && npm run smoke:package"
+    "verify:v1": "npm run typecheck && npm test && npm run build && npm run check:content && npm run check:example && npm run check:quickstart && npm run smoke:package"
   },
   "keywords": [
     "decision-log",
