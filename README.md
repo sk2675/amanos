@@ -22,6 +22,8 @@ amanos --version
 
 `npm link` stellt den Befehl `amanos` systemweit als Verknüpfung auf diesen lokalen Checkout bereit.
 
+Eine vollständige, in CI verifizierte Schritt-für-Schritt-Anleitung bis zum ersten `DECISIONS.md`-Eintrag steht unter [`docs/quickstart.md`](./docs/quickstart.md).
+
 Der reproduzierbare Release-Smoke-Test baut ein Paket, installiert dieses in einem frischen temporären Verzeichnis und führt dessen verlinkten Binärbefehl aus:
 
 ```bash

@@ -46,5 +46,8 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Check quickstart doc against the real CLI
+        run: npm run check:quickstart
+
       - name: Check example demo output
         run: npm run check:example
