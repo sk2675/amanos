@@ -27,7 +27,19 @@ jobs:
         with:
           node-version: "24.20.0"
 
+      - name: Check trusted smoke test availability
+        id: smoke-test
+        shell: bash
+        run: |
+          if [[ -f site/scripts/smoke-preview.mjs ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Preview smoke test becomes active after this workflow and its trusted script are merged to the default branch."
+          fi
+
       - name: Smoke-test successful preview deployment
+        if: steps.smoke-test.outputs.available == 'true'
         env:
           PREVIEW_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
           # Required when Vercel Deployment Protection is enabled. Configure the
