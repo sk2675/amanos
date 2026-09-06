@@ -32,7 +32,7 @@ const FENCE_ROLES = [
 
 function extractFences(markdown) {
   const fences = [];
-  const pattern = /```([a-zA-Z0-9]*)\n([\s\S]*?)```/g;
+  const pattern = /```([a-zA-Z0-9]*)\r?\n([\s\S]*?)```/g;
   let match;
   while ((match = pattern.exec(markdown)) !== null) {
     fences.push({ lang: match[1], content: match[2] });
