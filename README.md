@@ -4,7 +4,7 @@
 
 Amanos ist ein lokales Entscheidungs-Gedächtnis für Projekte und Code. Die CLI erkennt Entscheidungen in freien Notizen, hält sie in einer zentralen `DECISIONS.md` fest und findet mögliche Auswirkungen über mehrere Git-Repositories hinweg.
 
-Der V1-Quellstand ist funktionsvollständig und befindet sich im Release-Review. Das in der npm-Registry vorhandene `amanos@0.0.1` ist ein fehlerhafter Stub und **nicht** V1. Bis eine korrigierte Version sowohl als GitHub Release als auch auf npm veröffentlicht ist, gilt die Installation aus dem Quell-Repository als unterstützter Pfad.
+Der V1-Quellstand `0.1.0` ist funktionsvollständig und befindet sich im Release-Review. Das in der npm-Registry vorhandene `amanos@0.0.1` ist ein fehlerhafter Stub und **nicht** V1. Bis `0.1.0` sowohl als GitHub Release als auch auf npm veröffentlicht ist, gilt die Installation aus dem Quell-Repository als unterstützter Pfad.
 
 ## Voraussetzungen und Installation
 

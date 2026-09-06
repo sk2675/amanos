@@ -15,12 +15,12 @@ This checklist is the required status reconciliation for every Amanos release. A
    npm --prefix site run build
    ```
 
-4. Review `npm pack --dry-run` and confirm that the tarball contains only the package manifest, CLI output under `dist/`, README, and LICENSE.
+4. Run `npm run check:package`; it executes `npm pack --dry-run` and rejects anything except the package manifest, JavaScript CLI output under `dist/`, README, and LICENSE.
 5. Merge only after the pull-request checks pass on Windows and Linux.
 
 ## Publication
 
-1. Confirm that npm lists the expected owner and that the npm trusted publisher is restricted to this repository, `release.yml`, and the `npm` GitHub environment.
+1. Confirm that npm lists `simon.krumboeck` as an owner and that the npm trusted publisher is restricted to the public `sk2675/amanos` repository, `release.yml`, the `npm` GitHub environment, and direct `npm publish` actions.
 2. Create a GitHub release whose tag is exactly `v` followed by the package version. Publishing the release invokes the protected npm workflow.
 3. Verify in a fresh directory, using the registry rather than a local tarball:
 

@@ -52,8 +52,16 @@ try {
   }
 
   const manifest = JSON.parse(await readFile(join(repository, "package.json"), "utf8"));
+  const installedVersion = runNpm(
+    ["exec", "--offline", "--yes=false", "--", "amanos", "--version"],
+    installDirectory,
+  ).trim();
+  if (installedVersion !== manifest.version) {
+    throw new Error(`installed amanos --version returned ${installedVersion}, expected ${manifest.version}`);
+  }
+
   console.log(
-    `Package smoke test passed: installed ${manifest.name}@${manifest.version} in a fresh directory and ran amanos --help.`,
+    `Package smoke test passed: installed ${manifest.name}@${manifest.version} in a fresh directory and ran amanos --help and --version.`,
   );
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true });

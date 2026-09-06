@@ -40,7 +40,7 @@ npm --prefix site run build
 
 ## Status reconciliation
 
-As of 6 September 2026, all status surfaces describe the same state: **V1 release candidate, not released**.
+As of 6 September 2026, all status surfaces describe the same state: **V1 `0.1.0` release candidate, not released**.
 
 - Git branch: implementation is ready for pull-request review but is not yet on `main`.
 - V1 milestone: remains open until merge and publication are verified.
