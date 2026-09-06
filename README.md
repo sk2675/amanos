@@ -4,7 +4,7 @@
 
 Amanos ist ein lokales Entscheidungs-Gedächtnis für Projekte und Code. Die CLI erkennt Entscheidungen in freien Notizen, hält sie in einer zentralen `DECISIONS.md` fest und findet mögliche Auswirkungen über mehrere Git-Repositories hinweg.
 
-V1 ist als lokal installierbare CLI lauffähig. Das npm-Paket ist noch privat und nicht in der npm-Registry veröffentlicht.
+Der V1-Quellstand ist funktionsvollständig und befindet sich im Release-Review. Das in der npm-Registry vorhandene `amanos@0.0.1` ist ein fehlerhafter Stub und **nicht** V1. Bis eine korrigierte Version sowohl als GitHub Release als auch auf npm veröffentlicht ist, gilt die Installation aus dem Quell-Repository als unterstützter Pfad.
 
 ## Voraussetzungen und Installation
 
@@ -21,6 +21,14 @@ amanos --version
 ```
 
 `npm link` stellt den Befehl `amanos` systemweit als Verknüpfung auf diesen lokalen Checkout bereit.
+
+Der reproduzierbare Release-Smoke-Test baut ein Paket, installiert dieses in einem frischen temporären Verzeichnis und führt dessen verlinkten Binärbefehl aus:
+
+```bash
+npm run smoke:package
+```
+
+Der Abgleich des V1-Umfangs und der Release-Statusquellen ist unter [`docs/v1-verification.md`](./docs/v1-verification.md) dokumentiert.
 
 ## Die vier Befehle
 
@@ -111,7 +119,7 @@ Für jede Entscheidung sucht Amanos in lokalen Git-Repositories nach thematisch 
 - keine Ausführung eines Coding-Agenten und keine automatische Erstellung von Branches, Commits oder Tests
 - niemals automatischer Push und niemals automatischer Merge
 - kein Dashboard und kein Backend
-- Installation derzeit nur aus dem Quell-Repository, nicht aus der npm-Registry
+- bis zum korrigierten Release Installation nur aus dem Quell-Repository; `amanos@0.0.1` aus der npm-Registry ist nicht V1
 
 `amanos-agent-anleitung.md` ist ein [internes Arbeitsdokument](./amanos-agent-anleitung.md). Es beschreibt auch frühere Zielbilder und ist weder Benutzerhandbuch noch verbindliche Beschreibung des aktuellen V1-Verhaltens.
 

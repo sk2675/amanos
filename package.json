@@ -15,8 +15,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "check:content": "node scripts/check-site-content.mjs",
+    "smoke:package": "node scripts/smoke-package.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify:v1": "npm run typecheck && npm test && npm run build && npm run check:content && npm run smoke:package"
   },
   "keywords": [],
   "license": "Apache-2.0",
