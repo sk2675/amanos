@@ -9,6 +9,7 @@ export type Invocation =
       readonly command: string;
       readonly workspace: string;
       readonly dryRun?: true;
+      readonly verbose?: true;
     };
 
 /**
@@ -41,7 +42,8 @@ export function parseArgs(argv: readonly string[]): Invocation {
     );
   }
 
-  const unknownOption = rest.find((arg) => arg.startsWith("-") && arg !== "--dry-run");
+  const knownOptions = new Set(["--dry-run", "--verbose"]);
+  const unknownOption = rest.find((arg) => arg.startsWith("-") && !knownOptions.has(arg));
   if (unknownOption !== undefined) {
     throw new UsageError(`Unknown option "${unknownOption}".`);
   }
@@ -54,7 +56,15 @@ export function parseArgs(argv: readonly string[]): Invocation {
     throw new UsageError('Option "--dry-run" is only available for "scan".');
   }
 
-  const positional = rest.filter((arg) => arg !== "--dry-run");
+  const verboseFlags = rest.filter((arg) => arg === "--verbose");
+  if (verboseFlags.length > 1) {
+    throw new UsageError('Option "--verbose" may only be specified once.');
+  }
+  if (verboseFlags.length === 1 && command !== "scan" && command !== "status") {
+    throw new UsageError('Option "--verbose" is only available for "scan" and "status".');
+  }
+
+  const positional = rest.filter((arg) => !knownOptions.has(arg));
   const workspace = positional[0];
   if (workspace === undefined) {
     throw new UsageError(`Missing <workspace> argument for "${command}".`);
@@ -71,5 +81,6 @@ export function parseArgs(argv: readonly string[]): Invocation {
     command,
     workspace,
     ...(dryRunFlags.length === 1 ? { dryRun: true as const } : {}),
+    ...(verboseFlags.length === 1 ? { verbose: true as const } : {}),
   };
 }

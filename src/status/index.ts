@@ -1,6 +1,7 @@
 import { readDecisionFile, type DecisionFile } from "../store/decisions.js";
 import {
   readState,
+  type RecordedError,
   type Workspace,
   type WorkspaceState,
 } from "../workspace/index.js";
@@ -13,11 +14,14 @@ export interface StatusSummary {
   readonly blockedChanges: number;
   readonly lastScanAt: string | null;
   readonly errors: number;
+  readonly errorDetails: readonly RecordedError[];
 }
 
 export interface StatusOptions {
   /** Injectable clock so relative output remains deterministic in tests. */
   readonly now?: () => number;
+  /** Include the path, cause and timestamp of every recorded scan error. */
+  readonly verbose?: boolean;
 }
 
 /**
@@ -36,11 +40,16 @@ export function deriveStatus(
     blockedChanges: countStatus(decisions, "blocked"),
     lastScanAt: state.lastScanAt,
     errors: state.errors.length,
+    errorDetails: state.errors,
   };
 }
 
 /** Formats one summary as the stable, line-oriented CLI representation. */
-export function formatStatus(summary: StatusSummary, now = Date.now()): readonly string[] {
+export function formatStatus(
+  summary: StatusSummary,
+  now = Date.now(),
+  verbose = false,
+): readonly string[] {
   return [
     quantity(summary.activeDecisions, "active decision"),
     ...(summary.draftDecisions === 0
@@ -52,7 +61,10 @@ export function formatStatus(summary: StatusSummary, now = Date.now()): readonly
     ...(summary.errors === 0
       ? []
       : [
-          `${quantity(summary.errors, "error")} — see 'amanos scan --verbose'`,
+          verbose
+            ? quantity(summary.errors, "error")
+            : `${quantity(summary.errors, "error")} — use --verbose for details`,
+          ...(verbose ? summary.errorDetails.map(formatRecordedError) : []),
         ]),
   ];
 }
@@ -91,7 +103,11 @@ export async function readStatus(
   ]);
   const summary = deriveStatus(decisions, state);
 
-  for (const line of formatStatus(summary, (options.now ?? Date.now)())) {
+  for (const line of formatStatus(
+    summary,
+    (options.now ?? Date.now)(),
+    options.verbose === true,
+  )) {
     workspace.io.out(line);
   }
 
@@ -119,4 +135,14 @@ function countCandidateImpacts(decisions: DecisionFile): number {
 
 function quantity(count: number, singular: string): string {
   return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
+
+function formatRecordedError(error: RecordedError): string {
+  const path = error.path ?? ".";
+  const timestamp = error.at ?? "unknown time";
+  return `  error ${path} at ${timestamp}: ${oneLine(error.message)}`;
+}
+
+function oneLine(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
 }

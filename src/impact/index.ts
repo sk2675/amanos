@@ -67,6 +67,7 @@ export interface AdditionalImpactDecision {
 export interface ImpactScanOptions {
   readonly dryRun?: boolean;
   readonly quiet?: boolean;
+  readonly verbose?: boolean;
   readonly additionalDecisions?: readonly AdditionalImpactDecision[];
   readonly initialErrors?: readonly ImpactScanError[];
 }
@@ -274,7 +275,18 @@ export async function scanImpacts(
       `Scanned ${discovery.repositories.length} repositories for ${decisions.length} decisions.`,
     );
     workspace.io.out(`Found ${candidateCount} candidate impacts (${added} newly recorded).`);
-    for (const error of errors) workspace.io.err(`  error ${error.path}: ${error.message}`);
+    if (errors.length > 0) {
+      workspace.io.err(
+        options.verbose === true
+          ? `${quantity(errors.length, "error")}.`
+          : `${quantity(errors.length, "error")} — use --verbose for details.`,
+      );
+    }
+    if (options.verbose === true) {
+      for (const error of errors) {
+        workspace.io.err(`  error ${error.path}: ${oneLine(error.message)}`);
+      }
+    }
   }
 
   return {
@@ -400,6 +412,14 @@ function isInside(root: string, path: string): boolean {
 
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function quantity(count: number, singular: string): string {
+  return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
+
+function oneLine(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 export { deriveKeywords } from "../keywords.js";

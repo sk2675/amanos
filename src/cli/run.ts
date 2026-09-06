@@ -25,24 +25,30 @@ export async function run(argv: readonly string[], io: Io): Promise<number> {
         invocation.command,
         await openWorkspace(invocation.workspace, io),
         invocation.dryRun === true,
+        invocation.verbose === true,
       );
       return 0;
   }
 }
 
-async function dispatch(command: string, workspace: Workspace, dryRun: boolean): Promise<void> {
+async function dispatch(
+  command: string,
+  workspace: Workspace,
+  dryRun: boolean,
+  verbose: boolean,
+): Promise<void> {
   switch (command) {
     case "init":
       await initWorkspace(workspace);
       return;
     case "scan":
-      await scanWorkspace(workspace, { dryRun });
+      await scanWorkspace(workspace, { dryRun, verbose });
       return;
     case "watch":
       await watchWorkspace(workspace);
       return;
     case "status":
-      await readStatus(workspace);
+      await readStatus(workspace, { verbose });
       return;
     default:
       throw new UsageError(`Unknown command "${command}".`);

@@ -35,9 +35,31 @@ describe("parseArgs", () => {
     });
   });
 
+  it("parses --verbose for scan and status", () => {
+    expect(parseArgs(["scan", "--verbose", "./ws", "--dry-run"])).toEqual({
+      kind: "command",
+      command: "scan",
+      workspace: "./ws",
+      dryRun: true,
+      verbose: true,
+    });
+    expect(parseArgs(["status", "./ws", "--verbose"])).toEqual({
+      kind: "command",
+      command: "status",
+      workspace: "./ws",
+      verbose: true,
+    });
+  });
+
   it("rejects --dry-run for other commands", () => {
     expect(() => parseArgs(["init", "./ws", "--dry-run"])).toThrowError(
       /only available for "scan"/,
+    );
+  });
+
+  it("rejects --verbose for commands without recoverable scan errors", () => {
+    expect(() => parseArgs(["watch", "./ws", "--verbose"])).toThrowError(
+      /only available for "scan" and "status"/,
     );
   });
 

@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { V1_AGENT_DISABLED_REASON, type AgentRequest } from "../src/agent/index.js";
 import { run } from "../src/cli/run.js";
@@ -12,6 +12,20 @@ import { readState, workspacePaths } from "../src/workspace/index.js";
 import { makeTempDir } from "./helpers/workspace.js";
 
 const execFileAsync = promisify(execFile);
+const unreadableSource = vi.hoisted(() => ({ path: "" }));
+
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  return {
+    ...actual,
+    readFile: (path: string, options?: unknown) => {
+      if (unreadableSource.path !== "" && String(path) === unreadableSource.path) {
+        return Promise.reject(Object.assign(new Error("permission denied"), { code: "EACCES" }));
+      }
+      return (actual.readFile as (p: string, o?: unknown) => Promise<unknown>)(path, options);
+    },
+  };
+});
 
 function recordingIo(): {
   io: { out: (line: string) => void; err: (line: string) => void };
@@ -159,10 +173,15 @@ describe("amanos scan", () => {
     expect(lines).toContain("  would add candidate D-001 · app-repo/src/pricing.ts");
   });
 
-  it("stores repository errors with the scan timestamp and keeps the run visible", async () => {
+  it("keeps a recognized decision when a broken repository fails and exposes the error in status", async () => {
     const root = await makeTempDir();
     const paths = workspacePaths(root);
     await initWorkspace({ paths, io: recordingIo().io });
+    await writeFile(
+      join(root, "decision.md"),
+      "We decided to keep recognized decisions when repository scans fail.\n",
+      "utf8",
+    );
     await mkdir(join(root, "broken-repo", ".git"), { recursive: true });
     const { io, lines } = recordingIo();
 
@@ -170,7 +189,10 @@ describe("amanos scan", () => {
       scannedAt: "2026-09-06T12:02:00.000Z",
     });
     const state = await readState(paths);
+    const decisions = parseDecisionFile(await readFile(paths.decisions, "utf8"));
 
+    expect(result.newDecisions).toBe(1);
+    expect(decisions.decisions).toHaveLength(1);
     expect(result.errors).toHaveLength(1);
     expect(state.lastScanAt).toBe("2026-09-06T12:02:00.000Z");
     expect(state.errors).toEqual([
@@ -180,6 +202,67 @@ describe("amanos scan", () => {
         at: "2026-09-06T12:02:00.000Z",
       },
     ]);
-    expect(lines.some((line) => line.startsWith("  error broken-repo:"))).toBe(true);
+    expect(lines).toContain("1 error — use --verbose for details.");
+    expect(lines.some((line) => line.startsWith("  error broken-repo:"))).toBe(false);
+
+    const verbose = recordingIo();
+    expect(await run(["status", root, "--verbose"], verbose.io)).toBe(0);
+    expect(verbose.lines).toContain("1 error");
+    expect(
+      verbose.lines.some((line) =>
+        line.startsWith("  error broken-repo at 2026-09-06T12:02:00.000Z:"),
+      ),
+    ).toBe(true);
+  });
+
+  it("continues past an unreadable note and clears the error after recovery", async () => {
+    const root = await makeTempDir();
+    const paths = workspacePaths(root);
+    await initWorkspace({ paths, io: recordingIo().io });
+    await mkdir(join(root, "notes"));
+    await writeFile(join(root, "notes", "readable.md"), "We decided to ship on Monday.\n", "utf8");
+    unreadableSource.path = join(root, "notes", "private.md");
+    await writeFile(unreadableSource.path, "We decided to launch on Tuesday.\n", "utf8");
+
+    try {
+      const firstIo = recordingIo();
+      const first = await scanWorkspace({ paths, io: firstIo.io }, {
+        scannedAt: "2026-09-06T12:03:00.000Z",
+        verbose: true,
+      });
+      const firstState = await readState(paths);
+      const firstDecisions = parseDecisionFile(await readFile(paths.decisions, "utf8"));
+
+      expect(first.filesRead).toBe(1);
+      expect(first.newDecisions).toBe(1);
+      expect(firstDecisions.decisions.map(({ title }) => title)).toEqual([
+        "We decided to ship on Monday.",
+      ]);
+      expect(firstState.errors).toEqual([
+        {
+          message: "Could not read source: permission denied",
+          path: "notes/private.md",
+          at: "2026-09-06T12:03:00.000Z",
+        },
+      ]);
+      expect(firstIo.lines).toContain("1 error.");
+      expect(firstIo.lines).toContain(
+        "  error notes/private.md: Could not read source: permission denied",
+      );
+
+      unreadableSource.path = "";
+      const second = await scanWorkspace({ paths, io: recordingIo().io }, {
+        scannedAt: "2026-09-06T12:04:00.000Z",
+      });
+      const secondState = await readState(paths);
+      const secondDecisions = parseDecisionFile(await readFile(paths.decisions, "utf8"));
+
+      expect(second.filesRead).toBe(2);
+      expect(second.newDecisions).toBe(1);
+      expect(secondDecisions.decisions).toHaveLength(2);
+      expect(secondState.errors).toEqual([]);
+    } finally {
+      unreadableSource.path = "";
+    }
   });
 });

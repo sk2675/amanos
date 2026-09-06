@@ -70,17 +70,13 @@ describe("deriveStatus", () => {
       ].join("\n"),
     );
 
+    const errors = [
+      { message: "broken repo", path: "repo", at: "2026-09-06T12:00:00.000Z" },
+      { message: "unreadable file", path: "notes/a.md", at: null },
+    ];
+
     expect(
-      deriveStatus(
-        decisions,
-        state({
-          lastScanAt: "2026-09-06T12:00:00.000Z",
-          errors: [
-            { message: "broken repo", path: "repo", at: "2026-09-06T12:00:00.000Z" },
-            { message: "unreadable file", path: "notes/a.md", at: null },
-          ],
-        }),
-      ),
+      deriveStatus(decisions, state({ lastScanAt: "2026-09-06T12:00:00.000Z", errors })),
     ).toEqual({
       activeDecisions: 1,
       draftDecisions: 1,
@@ -88,6 +84,7 @@ describe("deriveStatus", () => {
       blockedChanges: 1,
       lastScanAt: "2026-09-06T12:00:00.000Z",
       errors: 2,
+      errorDetails: errors,
     });
   });
 });
@@ -117,6 +114,14 @@ describe("formatStatus", () => {
           blockedChanges: 1,
           lastScanAt: "2026-09-06T12:00:00.000Z",
           errors: 2,
+          errorDetails: [
+            {
+              message: "fatal: broken\nstack detail",
+              path: "repo",
+              at: "2026-09-06T12:00:00.000Z",
+            },
+            { message: "permission denied", path: "notes/a.md", at: null },
+          ],
         },
         now,
       ),
@@ -126,7 +131,36 @@ describe("formatStatus", () => {
       "7 candidate impacts",
       "1 blocked change",
       "Last scan: 2 minutes ago",
-      "2 errors — see 'amanos scan --verbose'",
+      "2 errors — use --verbose for details",
+    ]);
+
+    expect(
+      formatStatus(
+        {
+          activeDecisions: 3,
+          draftDecisions: 0,
+          candidateImpacts: 7,
+          blockedChanges: 1,
+          lastScanAt: "2026-09-06T12:00:00.000Z",
+          errors: 1,
+          errorDetails: [
+            {
+              message: "fatal: broken\nstack detail",
+              path: "repo",
+              at: "2026-09-06T12:00:00.000Z",
+            },
+          ],
+        },
+        now,
+        true,
+      ),
+    ).toEqual([
+      "3 active decisions",
+      "7 candidate impacts",
+      "1 blocked change",
+      "Last scan: 2 minutes ago",
+      "1 error",
+      "  error repo at 2026-09-06T12:00:00.000Z: fatal: broken stack detail",
     ]);
 
     expect(
@@ -137,6 +171,7 @@ describe("formatStatus", () => {
         blockedChanges: 0,
         lastScanAt: null,
         errors: 0,
+        errorDetails: [],
       }),
     ).toEqual([
       "0 active decisions",
@@ -172,6 +207,30 @@ describe("readStatus", () => {
       "0 blocked changes",
       "Last scan: 2 minutes ago",
     ]);
+  });
+
+  it("shows stored paths, causes and timestamps in verbose mode", async () => {
+    const paths = workspacePaths(await makeTempDir());
+    await mkdir(paths.amanosDir);
+    await writeFile(paths.decisions, "# Decisions\n", "utf8");
+    await writeState(paths, {
+      ...INITIAL_STATE,
+      errors: [
+        {
+          message: "Could not read source: permission denied",
+          path: "notes/private.md",
+          at: "2026-09-06T12:00:00.000Z",
+        },
+      ],
+    });
+    const { io, lines } = recordingIo();
+
+    await readStatus({ paths, io }, { now: () => now, verbose: true });
+
+    expect(lines).toContain("1 error");
+    expect(lines).toContain(
+      "  error notes/private.md at 2026-09-06T12:00:00.000Z: Could not read source: permission denied",
+    );
   });
 
   it("reports a missing initialization as an expected CLI error", async () => {

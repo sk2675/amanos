@@ -11,5 +11,6 @@ describe("helpText", () => {
     }
     expect(text).toContain("Watch the workspace");
     expect(text).toContain("--dry-run");
+    expect(text).toContain("--verbose");
   });
 });

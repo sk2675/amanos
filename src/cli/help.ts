@@ -12,7 +12,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   },
   {
     name: "scan",
-    args: "<workspace> [--dry-run]",
+    args: "<workspace> [--dry-run] [--verbose]",
     description: "Find decisions and candidate impacts across all repositories.",
   },
   {
@@ -22,7 +22,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   },
   {
     name: "status",
-    args: "<workspace>",
+    args: "<workspace> [--verbose]",
     description: "Show a compact overview of decisions, impacts and the last scan.",
   },
 ];
@@ -47,6 +47,7 @@ export function helpText(): string {
     "",
     "Options:",
     "  --dry-run      Preview scan changes without writing any files.",
+    "  --verbose      Show paths and causes for recorded errors.",
     "  -h, --help     Show this help.",
     "  -v, --version  Show the installed version.",
     "",

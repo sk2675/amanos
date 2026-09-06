@@ -13,6 +13,8 @@ import { readSourceFiles } from "./sources.js";
 
 export interface ScanOptions {
   readonly dryRun?: boolean;
+  /** Print each recoverable error after the compact summary. */
+  readonly verbose?: boolean;
   /** Injectable values keep integration tests deterministic. */
   readonly scannedAt?: string;
   readonly now?: () => number;
@@ -54,6 +56,8 @@ export async function scanWorkspace(
   const findings = sources.files.flatMap((source) =>
     parseDecisions(source.path, source.content, { config, detectedAt: scannedAt }),
   );
+  // This is the durability boundary: persist recognized decisions before any
+  // repository or agent work that can fail independently.
   const appended = await appendDecisions(workspace.paths, findings, { dryRun });
   const impacts = await scanImpacts(workspace, scannedAt, {
     dryRun,
@@ -76,20 +80,7 @@ export async function scanWorkspace(
     : await prepareWithAgent(agent, appended.appended, sources.files, impacts);
   const durationMs = Math.max(0, Math.round(now() - startedAt));
 
-  report(workspace, {
-    dryRun,
-    filesRead: sources.files.length,
-    findings: findings.length,
-    newDecisions: appended.appended.length,
-    newCandidates: impacts.added,
-    durationMs,
-    appended: appended.appended,
-    impacts,
-    agentRuns,
-    errors: impacts.errors,
-  });
-
-  return {
+  const result: ScanResult = {
     dryRun,
     filesRead: sources.files.length,
     findings: findings.length,
@@ -101,6 +92,9 @@ export async function scanWorkspace(
     agentRuns,
     errors: impacts.errors,
   };
+
+  report(workspace, result, options.verbose === true);
+  return result;
 }
 
 /** Runs sequentially so two decisions can never race while preparing one repo. */
@@ -129,7 +123,7 @@ async function prepareWithAgent(
   return runs;
 }
 
-function report(workspace: Workspace, result: ScanResult): void {
+function report(workspace: Workspace, result: ScanResult, verbose: boolean): void {
   const prefix = result.dryRun ? "Dry run: " : "";
   workspace.io.out(`${prefix}Read ${quantity(result.filesRead, "source file")}.`);
   workspace.io.out(`${prefix}${decisionSummary(result.newDecisions)}`);
@@ -144,8 +138,17 @@ function report(workspace: Workspace, result: ScanResult): void {
     }
   }
 
-  for (const error of result.errors) {
-    workspace.io.err(`  error ${error.path}: ${error.message}`);
+  if (result.errors.length > 0) {
+    workspace.io.err(
+      verbose
+        ? `${quantity(result.errors.length, "error")}.`
+        : `${quantity(result.errors.length, "error")} — use --verbose for details.`,
+    );
+  }
+  if (verbose) {
+    for (const error of result.errors) {
+      workspace.io.err(`  error ${error.path}: ${oneLine(error.message)}`);
+    }
   }
   workspace.io.out(`${prefix}Completed in ${result.durationMs} ms.`);
 }
@@ -160,6 +163,10 @@ function candidateSummary(count: number): string {
 
 function quantity(count: number, singular: string): string {
   return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
+
+function oneLine(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 export { readSourceFiles, type SourceFile, type SourceReadError, type SourceReadResult } from "./sources.js";
