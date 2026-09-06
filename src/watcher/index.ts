@@ -204,22 +204,29 @@ export async function startWorkspaceWatcher(
     if (closePromise !== undefined) return closePromise;
     closed = true;
     clearQuietTimer();
-    fileWatcher.close();
+    const fileWatcherClosed = new Promise<void>((resolveClosed) => {
+      fileWatcher.once("close", resolveClosed);
+      fileWatcher.close();
+    });
     if (options.signal !== undefined) options.signal.removeEventListener("abort", onAbort);
 
-    // Keep the workspace lock until an in-flight scan has settled. This closes
-    // the only window in which another process could otherwise start in parallel.
-    closePromise = (activeScan ?? Promise.resolve()).then(() => releaseLock(lock)).then(
-      () => {
-        emit({ type: "stopped" });
-        if (terminalError === undefined) resolveDone?.();
-        else rejectDone?.(terminalError);
-      },
-      (error: unknown) => {
-        rejectDone?.(error);
-        throw error;
-      },
-    );
+    // Keep the workspace lock until an in-flight scan has settled and the OS
+    // watcher confirms closure. Besides preserving single-flight semantics,
+    // this makes it safe for callers to remove the watched directory after the
+    // returned promise resolves.
+    closePromise = Promise.all([activeScan ?? Promise.resolve(), fileWatcherClosed])
+      .then(() => releaseLock(lock))
+      .then(
+        () => {
+          emit({ type: "stopped" });
+          if (terminalError === undefined) resolveDone?.();
+          else rejectDone?.(terminalError);
+        },
+        (error: unknown) => {
+          rejectDone?.(error);
+          throw error;
+        },
+      );
     return closePromise;
   };
 
