@@ -30,7 +30,7 @@ Der reproduzierbare Release-Smoke-Test baut ein Paket, installiert dieses in ein
 npm run smoke:package
 ```
 
-Der Abgleich des V1-Umfangs und der Release-Statusquellen ist unter [`docs/v1-verification.md`](./docs/v1-verification.md) dokumentiert.
+Der Abgleich des V1-Umfangs und der Release-Statusquellen ist unter [`docs/v1-verification.md`](./docs/v1-verification.md) dokumentiert. Die vollständige Befehls- und Konfigurationsreferenz mit allen Optionen, Exit-Codes und dem Format von `DECISIONS.md` steht unter [`docs/cli-reference.md`](./docs/cli-reference.md).
 
 ## Die vier Befehle
 
