@@ -18,10 +18,12 @@ export {
   updateDecisionStatus,
   type AppendDecisionsResult,
   type AppendedDecision,
+  type AddedImpactCandidate,
   type DecisionFile,
   type DecisionImpactUpdate,
   type ImpactUpdateResult,
   type StatusUpdateResult,
   type StoredDecision,
+  type WriteOptions,
 } from "./decisions.js";
 export { initWorkspace, type InitOutcome, type InitResult } from "./init.js";

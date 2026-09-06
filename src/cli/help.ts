@@ -12,7 +12,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   },
   {
     name: "scan",
-    args: "<workspace>",
+    args: "<workspace> [--dry-run]",
     description: "Find decisions and candidate impacts across all repositories.",
   },
   {
@@ -46,6 +46,7 @@ export function helpText(): string {
     ...lines,
     "",
     "Options:",
+    "  --dry-run      Preview scan changes without writing any files.",
     "  -h, --help     Show this help.",
     "  -v, --version  Show the installed version.",
     "",

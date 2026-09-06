@@ -37,8 +37,28 @@ export interface ImpactScanResult {
   readonly decisions: number;
   readonly candidates: number;
   readonly added: number;
+  readonly addedCandidates: readonly ImpactCandidateAddition[];
   readonly impacts: readonly DecisionImpact[];
   readonly errors: readonly ImpactScanError[];
+}
+
+export interface ImpactCandidateAddition {
+  readonly decisionId: string;
+  readonly path: string;
+}
+
+/** A not-yet-persisted decision included when previewing a full scan. */
+export interface AdditionalImpactDecision {
+  readonly id: string;
+  readonly title: string;
+  readonly source: string;
+}
+
+export interface ImpactScanOptions {
+  readonly dryRun?: boolean;
+  readonly quiet?: boolean;
+  readonly additionalDecisions?: readonly AdditionalImpactDecision[];
+  readonly initialErrors?: readonly ImpactScanError[];
 }
 
 const MAX_TEXT_FILE_BYTES = 1_000_000;
@@ -109,18 +129,23 @@ const TEXT_FILE_NAMES = new Set([
 export async function scanImpacts(
   workspace: Workspace,
   scannedAt = new Date().toISOString(),
+  options: ImpactScanOptions = {},
 ): Promise<ImpactScanResult> {
   const [file, state, discovery] = await Promise.all([
     readDecisionFile(workspace.paths),
     readState(workspace.paths),
     discoverRepositories(workspace.paths.root),
   ]);
-  const errors: ImpactScanError[] = discovery.errors.map((error) => ({ ...error }));
+  const errors: ImpactScanError[] = [
+    ...(options.initialErrors ?? []),
+    ...discovery.errors.map((error) => ({ ...error })),
+  ];
+  const decisions = [...file.decisions, ...(options.additionalDecisions ?? [])];
   const candidates = new Map<string, Map<string, ImpactCandidate>>(
-    file.decisions.map((decision) => [decision.id, new Map()]),
+    decisions.map((decision) => [decision.id, new Map()]),
   );
   const keywords = new Map(
-    file.decisions.map((decision) => [decision.id, deriveKeywords(decision.title)]),
+    decisions.map((decision) => [decision.id, deriveKeywords(decision.title)]),
   );
 
   for (const repository of discovery.repositories) {
@@ -152,7 +177,7 @@ export async function scanImpacts(
       const display = displayPath(repository, repoRelativePath);
       const counts = wordCounts(`${repoRelativePath}\n${content}`);
 
-      for (const decision of file.decisions) {
+      for (const decision of decisions) {
         if (isDecisionSource(decision.source, workspacePath, display)) continue;
         const matched = (keywords.get(decision.id) ?? []).filter((keyword) => counts.has(keyword));
         if (matched.length === 0) continue;
@@ -170,47 +195,71 @@ export async function scanImpacts(
     }
   }
 
-  const impacts: DecisionImpact[] = file.decisions.map((decision) => ({
+  const impacts: DecisionImpact[] = decisions.map((decision) => ({
     decisionId: decision.id,
     keywords: keywords.get(decision.id) ?? [],
     candidates: [...(candidates.get(decision.id)?.values() ?? [])]
       .sort(compareCandidates)
       .slice(0, MAX_IMPACT_CANDIDATES),
   }));
+  const persistedIds = new Set(file.decisions.map((decision) => decision.id));
   const updated = await updateDecisionImpacts(
     workspace.paths,
-    impacts.map((impact) => ({
-      id: impact.decisionId,
-      candidatePaths: impact.candidates.map((candidate) => candidate.path),
-    })),
+    impacts
+      .filter((impact) => persistedIds.has(impact.decisionId))
+      .map((impact) => ({
+        id: impact.decisionId,
+        candidatePaths: impact.candidates.map((candidate) => candidate.path),
+      })),
+    { dryRun: options.dryRun === true },
   );
+  const additionalCandidates = impacts
+    .filter((impact) => !persistedIds.has(impact.decisionId))
+    .reduce((sum, impact) => sum + impact.candidates.length, 0);
+  const added = updated.added + additionalCandidates;
+  const addedCandidates: ImpactCandidateAddition[] = [
+    ...updated.addedCandidates.map(({ id, path }) => ({ decisionId: id, path })),
+    ...impacts
+      .filter((impact) => !persistedIds.has(impact.decisionId))
+      .flatMap((impact) =>
+        impact.candidates.map((candidate) => ({
+          decisionId: impact.decisionId,
+          path: candidate.path,
+        })),
+      ),
+  ];
 
   const previousRepositories = new Map(
     state.repositories.map((repository) => [repository.path, repository]),
   );
-  await writeState(workspace.paths, {
-    ...state,
-    lastScanAt: scannedAt,
-    repositories: discovery.repositories.map((repository) => ({
-      ...(previousRepositories.get(repository.relativePath) ?? {}),
-      path: repository.relativePath,
-      lastSeenAt: scannedAt,
-    })),
-    errors: errors.map((error) => ({ message: error.message, path: error.path, at: scannedAt })),
-  });
+  if (options.dryRun !== true) {
+    await writeState(workspace.paths, {
+      ...state,
+      lastScanAt: scannedAt,
+      repositories: discovery.repositories.map((repository) => ({
+        ...(previousRepositories.get(repository.relativePath) ?? {}),
+        path: repository.relativePath,
+        lastSeenAt: scannedAt,
+      })),
+      errors: errors.map((error) => ({ message: error.message, path: error.path, at: scannedAt })),
+    });
+  }
 
   const candidateCount = impacts.reduce((sum, impact) => sum + impact.candidates.length, 0);
-  workspace.io.out(
-    `Scanned ${discovery.repositories.length} repositories for ${file.decisions.length} decisions.`,
-  );
-  workspace.io.out(`Found ${candidateCount} candidate impacts (${updated.added} newly recorded).`);
-  for (const error of errors) workspace.io.err(`  error ${error.path}: ${error.message}`);
+  if (options.quiet !== true) {
+    workspace.io.out(
+      `Scanned ${discovery.repositories.length} repositories for ${decisions.length} decisions.`,
+    );
+    workspace.io.out(`Found ${candidateCount} candidate impacts (${added} newly recorded).`);
+    for (const error of errors) workspace.io.err(`  error ${error.path}: ${error.message}`);
+  }
 
   return {
     repositories: discovery.repositories.length,
-    decisions: file.decisions.length,
+    decisions: decisions.length,
     candidates: candidateCount,
-    added: updated.added,
+    added,
+    addedCandidates,
     impacts,
     errors,
   };

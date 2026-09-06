@@ -64,6 +64,11 @@ export interface AppendDecisionsResult {
   readonly nextDecisionNumber: number;
 }
 
+export interface WriteOptions {
+  /** Calculate the result without changing DECISIONS.md or state.json. */
+  readonly dryRun?: boolean;
+}
+
 export interface StatusUpdateResult {
   readonly id: string;
   readonly previousStatus: string;
@@ -80,6 +85,12 @@ export interface DecisionImpactUpdate {
 export interface ImpactUpdateResult {
   readonly added: number;
   readonly changedDecisions: number;
+  readonly addedCandidates: readonly AddedImpactCandidate[];
+}
+
+export interface AddedImpactCandidate {
+  readonly id: string;
+  readonly path: string;
 }
 
 export const MAX_IMPACT_CANDIDATES = 10;
@@ -162,6 +173,7 @@ export async function readDecisionFile(paths: WorkspacePaths): Promise<DecisionF
 export async function appendDecisions(
   paths: WorkspacePaths,
   findings: readonly Decision[],
+  options: WriteOptions = {},
 ): Promise<AppendDecisionsResult> {
   const [file, state] = await Promise.all([readDecisionFile(paths), readState(paths)]);
   const usedNumbers = new Set(file.usedIds.map(numberOfId));
@@ -228,14 +240,14 @@ export async function appendDecisions(
 
   // A no-op scan does not touch DECISIONS.md. This is stronger than merely
   // producing equal text: timestamps and file watchers remain undisturbed.
-  if (planned.length > 0) {
+  if (planned.length > 0 && options.dryRun !== true) {
     let content = addSupersededNotes(file, supersededExisting);
     for (const item of planned) {
       content = appendBlock(content, formatDecision(item));
     }
     await writeFileAtomic(paths.decisions, content);
   }
-  if (state.nextDecisionNumber !== nextDecisionNumber) {
+  if (state.nextDecisionNumber !== nextDecisionNumber && options.dryRun !== true) {
     await writeState(paths, { ...state, nextDecisionNumber });
   }
 
@@ -290,10 +302,12 @@ export async function updateDecisionStatus(
 export async function updateDecisionImpacts(
   paths: WorkspacePaths,
   updates: readonly DecisionImpactUpdate[],
+  options: WriteOptions = {},
 ): Promise<ImpactUpdateResult> {
   const file = await readDecisionFile(paths);
   const edits: TextEdit[] = [];
   let added = 0;
+  const addedCandidates: AddedImpactCandidate[] = [];
 
   for (const update of updates) {
     const entry = file.decisions.find((decision) => decision.id === update.id);
@@ -338,16 +352,21 @@ export async function updateDecisionImpacts(
 
     edits.push({ start: section.bodyStart, end: section.bodyEnd, replacement });
     added += additions.length;
+    addedCandidates.push(...additions.map((path) => ({ id: update.id, path })));
   }
 
-  if (edits.length === 0) return { added: 0, changedDecisions: 0 };
+  if (edits.length === 0) {
+    return { added: 0, changedDecisions: 0, addedCandidates: [] };
+  }
 
   let content = file.content;
   for (const edit of edits.sort((left, right) => right.start - left.start)) {
     content = content.slice(0, edit.start) + edit.replacement + content.slice(edit.end);
   }
-  await writeFileAtomic(paths.decisions, content);
-  return { added, changedDecisions: edits.length };
+  if (options.dryRun !== true) {
+    await writeFileAtomic(paths.decisions, content);
+  }
+  return { added, changedDecisions: edits.length, addedCandidates };
 }
 
 /** D-1 and D-001 both become the canonical fixed-width form D-001. */

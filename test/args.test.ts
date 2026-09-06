@@ -20,6 +20,27 @@ describe("parseArgs", () => {
     }
   });
 
+  it("parses --dry-run for scan before or after the workspace", () => {
+    expect(parseArgs(["scan", "--dry-run", "./ws"])).toEqual({
+      kind: "command",
+      command: "scan",
+      workspace: "./ws",
+      dryRun: true,
+    });
+    expect(parseArgs(["scan", "./ws", "--dry-run"])).toEqual({
+      kind: "command",
+      command: "scan",
+      workspace: "./ws",
+      dryRun: true,
+    });
+  });
+
+  it("rejects --dry-run for other commands", () => {
+    expect(() => parseArgs(["init", "./ws", "--dry-run"])).toThrowError(
+      /only available for "scan"/,
+    );
+  });
+
   it("rejects an unknown command", () => {
     expect(() => parseArgs(["nope", "./ws"])).toThrowError(UsageError);
   });
