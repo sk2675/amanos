@@ -2,10 +2,10 @@
 import Base from "../layouts/Base.astro";
 
 const commands = [
-  ["amanos init", "~/workspace", "Sets up the memory: DECISIONS.md as an append-only file."],
-  ["amanos scan", "~/workspace", "Reads notes, detects decisions, and flags possible impacts."],
-  ["amanos watch", "~/workspace", "Watches for changes and reports new candidates without writing anything."],
-  ["amanos status", "~/workspace", "Shows active decisions, open candidates, and blocked steps."],
+  ["amanos init", "~/workspace", "Creates DECISIONS.md plus the local config and state files without overwriting existing files."],
+  ["amanos scan", "~/workspace", "Reads supported notes, records new decisions, and updates candidate impacts."],
+  ["amanos watch", "~/workspace", "Watches recursively and runs a writing scan after the configured quiet period (60 seconds by default)."],
+  ["amanos status", "~/workspace", "Shows active and draft decisions, candidate impacts, blocked changes, and the last scan."],
 ];
 
 const title = "Docs — Amanos";
@@ -15,10 +15,10 @@ const description = "Current version status and CLI scope for Amanos.";
 <Base title={title} description={description} path="/docs">
   <section class="section shell">
     <p class="kicker">Docs</p>
-    <div class="version"><b>V1</b><span>In progress · September 2026</span></div>
+    <div class="version"><b>V1</b><span>Local CLI available · September 2026</span></div>
     <h1>One CLI.<br /><span class="serif">Four commands.</span></h1>
     <p class="intro" style="font-size:16px">
-      The first version ships as a local npm CLI. No dashboard, no backend, no platform lock-in.
+      The first version works as a source-installed local npm CLI. It uses a deterministic German and English phrase parser, writes its findings locally, and never changes discovered repositories.
     </p>
 
     <div class="command-list" style="margin-top:40px">
@@ -33,5 +33,9 @@ const description = "Current version status and CLI scope for Amanos.";
         ))
       }
     </div>
+
+    <p class="intro" style="font-size:16px; margin-top:40px">
+      V1 does not invoke a coding agent or create branches, commits, or tests. It never pushes or merges. Both <code>scan</code> and <code>watch</code> may update <code>DECISIONS.md</code> and <code>.amanos/state.json</code>; use <code>scan --dry-run</code> for a preview without writes.
+    </p>
   </section>
 </Base>
