@@ -1,28 +1,37 @@
 ---
 import "../styles/global.css";
+import { CANONICAL_ORIGIN, siteUrl } from "../../site-config.mjs";
 
 interface Props {
   title: string;
   description: string;
   path?: string;
+  lang?: "de" | "en";
 }
 
-const { title, description, path = "/" } = Astro.props;
-const canonical = new URL(path, Astro.site ?? "https://amanos.dev").href;
+const { title, description, path = "/", lang = "en" } = Astro.props;
+const canonical = new URL(path, Astro.site ?? CANONICAL_ORIGIN).href;
+const favicon = siteUrl("/favicon.png");
+const home = siteUrl("/");
+const docs = siteUrl("/docs");
+const imprint = siteUrl("/impressum");
+const privacy = siteUrl("/privacy");
+const locale = lang === "de" ? "de_DE" : "en_US";
+const skipLabel = lang === "de" ? "Zum Inhalt springen" : "Skip to content";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#f4f3ea" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/png" href={favicon} />
     <link rel="canonical" href={canonical} />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale" content={locale} />
     <meta property="og:site_name" content="Amanos" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -31,16 +40,16 @@ const canonical = new URL(path, Astro.site ?? "https://amanos.dev").href;
     <title>{title}</title>
   </head>
   <body>
-    <a class="skip-link" href="#content">Skip to content</a>
+    <a class="skip-link" href="#content">{skipLabel}</a>
 
     <header class="topbar">
       <div class="shell topbar-inner">
-        <a class="brand-lockup" href="/" aria-label="Amanos home">
+        <a class="brand-lockup" href={home} aria-label="Amanos home">
           <span class="mini-mark" aria-hidden="true"><i></i><i></i><i></i></span>
           <strong>amanos</strong>
         </a>
         <nav aria-label="Main navigation">
-          <a href="/docs">Docs</a>
+          <a href={docs}>Docs</a>
           <a class="icon-link" href="https://github.com/sk2675/amanos" target="_blank" rel="noopener noreferrer" aria-label="Amanos on GitHub">
             <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true">
               <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
@@ -56,14 +65,15 @@ const canonical = new URL(path, Astro.site ?? "https://amanos.dev").href;
 
     <footer class="shell footer">
       <div>
-        <a class="brand-lockup" href="/">
+        <a class="brand-lockup" href={home}>
           <span class="mini-mark" aria-hidden="true"><i></i><i></i><i></i></span>
           <strong>amanos</strong>
         </a>
         <p class="footer-note">Local first · no cloud · no silent merges</p>
       </div>
       <nav aria-label="Legal">
-        <a href="/impressum">Imprint</a>
+        <a href={imprint}>Imprint</a>
+        <a href={privacy}>Privacy</a>
         <span>© {new Date().getFullYear()} amanos</span>
       </nav>
     </footer>

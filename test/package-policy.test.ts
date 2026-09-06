@@ -12,7 +12,7 @@ const validManifest = {
   description: "A local-first decision memory for projects and code.",
   license: "Apache-2.0",
   repository: { type: "git", url: "git+https://github.com/sk2675/amanos.git" },
-  homepage: "https://amanos.dev",
+  homepage: "https://www.amanos.dev",
   bugs: { url: "https://github.com/sk2675/amanos/issues" },
   engines: { node: ">=20" },
   bin: { amanos: "dist/cli.js" },

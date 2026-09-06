@@ -8,7 +8,7 @@ const EXPECTED = {
   description: "A local-first decision memory for projects and code.",
   license: "Apache-2.0",
   repository: "git+https://github.com/sk2675/amanos.git",
-  homepage: "https://amanos.dev",
+  homepage: "https://www.amanos.dev",
   bugs: "https://github.com/sk2675/amanos/issues",
   engines: ">=20",
   bin: "dist/cli.js",

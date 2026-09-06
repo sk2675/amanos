@@ -8,8 +8,12 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "check": "astro check",
+    "check:build": "node scripts/check-build.mjs",
+    "check:content": "node ../scripts/check-site-content.mjs",
     "preview": "astro preview",
-    "check": "astro check"
+    "smoke:preview": "node scripts/smoke-preview.mjs",
+    "test": "npm run build && node --test test/*.test.mjs"
   },
   "dependencies": {
     "astro": "7.3.1"
