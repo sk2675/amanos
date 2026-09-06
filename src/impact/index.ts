@@ -39,12 +39,22 @@ export interface ImpactScanResult {
   readonly added: number;
   readonly addedCandidates: readonly ImpactCandidateAddition[];
   readonly impacts: readonly DecisionImpact[];
+  /** Candidates grouped into repository-local inputs for the agent seam. */
+  readonly targets: readonly ImpactTarget[];
   readonly errors: readonly ImpactScanError[];
 }
 
 export interface ImpactCandidateAddition {
   readonly decisionId: string;
   readonly path: string;
+}
+
+export interface ImpactTarget {
+  readonly decisionId: string;
+  /** Absolute repository root. */
+  readonly repositoryPath: string;
+  /** Candidate files relative to `repositoryPath`, ranked most relevant first. */
+  readonly candidatePaths: readonly string[];
 }
 
 /** A not-yet-persisted decision included when previewing a full scan. */
@@ -141,7 +151,7 @@ export async function scanImpacts(
     ...discovery.errors.map((error) => ({ ...error })),
   ];
   const decisions = [...file.decisions, ...(options.additionalDecisions ?? [])];
-  const candidates = new Map<string, Map<string, ImpactCandidate>>(
+  const candidates = new Map<string, Map<string, LocatedImpactCandidate>>(
     decisions.map((decision) => [decision.id, new Map()]),
   );
   const keywords = new Map(
@@ -182,10 +192,12 @@ export async function scanImpacts(
         const matched = (keywords.get(decision.id) ?? []).filter((keyword) => counts.has(keyword));
         if (matched.length === 0) continue;
         const occurrenceCount = matched.reduce((sum, keyword) => sum + (counts.get(keyword) ?? 0), 0);
-        const impact: ImpactCandidate = {
+        const impact: LocatedImpactCandidate = {
           path: display,
           matchedKeywords: matched,
           occurrences: occurrenceCount,
+          repositoryPath: repository.path,
+          repositoryRelativePath: repoRelativePath.replace(/\\/g, "/"),
         };
         const previous = candidates.get(decision.id)?.get(display);
         if (previous === undefined || compareCandidates(impact, previous) < 0) {
@@ -195,13 +207,24 @@ export async function scanImpacts(
     }
   }
 
+  const rankedCandidates = new Map(
+    decisions.map((decision) => [
+      decision.id,
+      [...(candidates.get(decision.id)?.values() ?? [])]
+        .sort(compareCandidates)
+        .slice(0, MAX_IMPACT_CANDIDATES),
+    ]),
+  );
   const impacts: DecisionImpact[] = decisions.map((decision) => ({
     decisionId: decision.id,
     keywords: keywords.get(decision.id) ?? [],
-    candidates: [...(candidates.get(decision.id)?.values() ?? [])]
-      .sort(compareCandidates)
-      .slice(0, MAX_IMPACT_CANDIDATES),
+    candidates: (rankedCandidates.get(decision.id) ?? []).map(
+      ({ path, matchedKeywords, occurrences }) => ({ path, matchedKeywords, occurrences }),
+    ),
   }));
+  const targets = decisions.flatMap((decision) =>
+    impactTargets(decision.id, rankedCandidates.get(decision.id) ?? []),
+  );
   const persistedIds = new Set(file.decisions.map((decision) => decision.id));
   const updated = await updateDecisionImpacts(
     workspace.paths,
@@ -261,8 +284,30 @@ export async function scanImpacts(
     added,
     addedCandidates,
     impacts,
+    targets,
     errors,
   };
+}
+
+interface LocatedImpactCandidate extends ImpactCandidate {
+  readonly repositoryPath: string;
+  readonly repositoryRelativePath: string;
+}
+
+function impactTargets(
+  decisionId: string,
+  candidates: readonly LocatedImpactCandidate[],
+): readonly ImpactTarget[] {
+  const repositoryPaths = [...new Set(candidates.map(({ repositoryPath }) => repositoryPath))].sort(
+    compareText,
+  );
+  return repositoryPaths.map((repositoryPath) => ({
+    decisionId,
+    repositoryPath,
+    candidatePaths: candidates
+      .filter((candidate) => candidate.repositoryPath === repositoryPath)
+      .map(({ repositoryRelativePath }) => repositoryRelativePath),
+  }));
 }
 
 /** Git supplies the authoritative `.gitignore` implementation for each repo. */

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 
+import { V1_AGENT_DISABLED_REASON, type AgentRequest } from "../src/agent/index.js";
 import { run } from "../src/cli/run.js";
 import { scanWorkspace } from "../src/scan/index.js";
 import { initWorkspace, parseDecisionFile } from "../src/store/index.js";
@@ -60,6 +61,13 @@ describe("amanos scan", () => {
     expect(result.filesRead).toBe(1);
     expect(result.newDecisions).toBe(1);
     expect(result.newCandidates).toBe(1);
+    expect(result.agentRuns).toEqual([
+      {
+        decisionId: "D-001",
+        repositoryPath: join(paths.root, "app-repo"),
+        result: { kind: "aborted", reason: V1_AGENT_DISABLED_REASON },
+      },
+    ]);
     expect(decisions.decisions).toHaveLength(1);
     expect(decisions.content).toContain("candidate · app-repo/src/pricing.ts");
     expect(state.lastScanAt).toBe("2026-09-06T12:00:00.000Z");
@@ -92,6 +100,41 @@ describe("amanos scan", () => {
     expect(lines).toContain("No new candidate impacts.");
   });
 
+  it("passes the configured adapter name and repository-local context through the scan seam", async () => {
+    const { paths } = await prepareWorkspace();
+    const configuredNames: string[] = [];
+    const requests: AgentRequest[] = [];
+
+    const result = await scanWorkspace({ paths, io: recordingIo().io }, {
+      scannedAt: "2026-09-06T12:00:00.000Z",
+      agentFactory: (configuredName) => {
+        configuredNames.push(configuredName);
+        return {
+          name: configuredName,
+          prepare: (request) => {
+            requests.push(request);
+            return Promise.resolve({ kind: "aborted", reason: "test adapter" });
+          },
+        };
+      },
+    });
+
+    expect(configuredNames).toEqual(["codex"]);
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).toMatchObject({
+      decisionId: "D-001",
+      repositoryPath: join(paths.root, "app-repo"),
+      candidatePaths: ["src/pricing.ts"],
+      sources: [
+        {
+          path: "notes/pricing.md",
+          content: "# Pricing\n\nWe decided the Pro plan costs 29 EUR per month.\n",
+        },
+      ],
+    });
+    expect(result.agentRuns[0]?.result).toEqual({ kind: "aborted", reason: "test adapter" });
+  });
+
   it("previews decisions and candidates through the CLI without writing any file", async () => {
     const { root, paths } = await prepareWorkspace();
     const files = [
@@ -109,6 +152,7 @@ describe("amanos scan", () => {
 
     expect(after.every((contents, index) => contents.equals(before[index] as Buffer))).toBe(true);
     expect(parseDecisionFile(after[0]?.toString("utf8") ?? "").decisions).toEqual([]);
+    expect(lines).not.toContain(expect.stringContaining("agent"));
     expect(lines).toContain("Dry run: Found 1 new decision.");
     expect(lines).toContain("Dry run: Found 1 new candidate impact.");
     expect(lines).toContain("  would add D-001 from notes/pricing.md#L3");

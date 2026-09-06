@@ -1,7 +1,8 @@
 import { UsageError } from "../errors.js";
 import type { Io } from "../io.js";
 import { scanWorkspace } from "../scan/index.js";
-import { initWorkspace, readStatus } from "../store/index.js";
+import { readStatus } from "../status/index.js";
+import { initWorkspace } from "../store/index.js";
 import { watchWorkspace } from "../watcher/index.js";
 import { openWorkspace, type Workspace } from "../workspace/index.js";
 import { parseArgs } from "./args.js";
