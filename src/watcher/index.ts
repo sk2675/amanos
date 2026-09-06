@@ -1,4 +1,4 @@
-import { watch, type FSWatcher } from "node:fs";
+import { realpathSync, watch, type FSWatcher } from "node:fs";
 import { readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 
@@ -187,8 +187,13 @@ export async function startWorkspaceWatcher(
   };
 
   try {
+    // Windows may expose temporary directories through an 8.3 short-path
+    // alias while libuv reports change events with the long path. Passing the
+    // native real path prevents libuv's internal prefix assertion from
+    // aborting the process before JavaScript can handle an error.
+    const watchRoot = realpathSync.native(workspace.paths.root);
     fileWatcher = watch(
-      workspace.paths.root,
+      watchRoot,
       { recursive: true, persistent: true },
       (_eventType, filename) => {
         const changedPath = relevantPath(workspace, filename);
