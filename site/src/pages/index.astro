@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import HeroAquarium from "../components/HeroAquarium.astro";
+import { siteUrl } from "../../site-config.mjs";
 
 const pillars = [
   {
@@ -41,6 +42,7 @@ const principles = [
 const title = "Amanos — Decisions that don't fade";
 const description =
   "The local decision memory for vibe coding. Amanos finds decisions in notes and tracks their possible impact across git repositories.";
+const docs = siteUrl("/docs");
 ---
 
 <Base title={title} description={description} path="/">
@@ -72,7 +74,7 @@ const description =
           Scattered notes become a traceable record: DECISIONS.md, a readable, append-only source of truth ready for your
           next coding agent.
         </p>
-        <a class="text-link" href="/docs">Read the docs <span aria-hidden="true">→</span></a>
+        <a class="text-link" href={docs}>Read the docs <span aria-hidden="true">→</span></a>
       </div>
     </div>
 

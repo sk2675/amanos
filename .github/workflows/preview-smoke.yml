@@ -1,0 +1,48 @@
+name: Preview smoke test
+
+on:
+  deployment_status:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Vercel preview routes
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.environment == 'Preview' &&
+      github.event.deployment.creator.login == 'vercel[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out trusted smoke test
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.20.0"
+
+      - name: Check trusted smoke test availability
+        id: smoke-test
+        shell: bash
+        run: |
+          if [[ -f site/scripts/smoke-preview.mjs ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Preview smoke test becomes active after this workflow and its trusted script are merged to the default branch."
+          fi
+
+      - name: Smoke-test successful preview deployment
+        if: steps.smoke-test.outputs.available == 'true'
+        env:
+          PREVIEW_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+          # Required when Vercel Deployment Protection is enabled. Configure the
+          # same Automation Bypass value in the Vercel project and this secret.
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: node site/scripts/smoke-preview.mjs

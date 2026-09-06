@@ -1,0 +1,64 @@
+name: Website CI
+
+on:
+  push:
+    paths:
+      - "site/**"
+      - "vercel.json"
+      - ".vercelignore"
+      - "scripts/check-site-content.mjs"
+      - ".github/workflows/site-ci.yml"
+      - ".github/workflows/preview-smoke.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - "vercel.json"
+      - ".vercelignore"
+      - "scripts/check-site-content.mjs"
+      - ".github/workflows/site-ci.yml"
+      - ".github/workflows/preview-smoke.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Astro build and content integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: site
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.20.0"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install website dependencies
+        run: npm ci
+
+      - name: Check Astro project
+        run: npm run check
+
+      - name: Check content policy
+        run: npm run check:content
+
+      - name: Build production website
+        run: npm run build
+
+      - name: Check domain routing
+        run: node --test test/*.test.mjs
+
+      - name: Check links, canonicals, and assets
+        run: npm run check:build

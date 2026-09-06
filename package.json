@@ -1,11 +1,55 @@
 {
   "name": "amanos",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.1.0",
+  "description": "A local-first decision memory for projects and code.",
+  "type": "module",
+  "bin": {
+    "amanos": "dist/cli.js"
+  },
   "files": [
     "dist"
   ],
-  "keywords": [],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "check:package": "node scripts/check-package.mjs",
+    "check:content": "node scripts/check-site-content.mjs",
+    "clean": "node scripts/clean.mjs",
+    "prepublishOnly": "npm run build && npm run check:package",
+    "smoke:package": "node scripts/smoke-package.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "verify:release": "npm run verify:v1 && npm run check:package",
+    "verify:v1": "npm run typecheck && npm test && npm run build && npm run check:content && npm run smoke:package"
+  },
+  "keywords": [
+    "decision-log",
+    "decision-record",
+    "developer-tools",
+    "local-first"
+  ],
   "license": "Apache-2.0",
-  "description": "A local-first decision memory for projects and code."
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sk2675/amanos.git"
+  },
+  "homepage": "https://www.amanos.dev",
+  "bugs": {
+    "url": "https://github.com/sk2675/amanos/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/"
+  },
+  "overrides": {
+    "vite": "6.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^3.2.6"
+  }
 }
